@@ -618,7 +618,7 @@ if (savedData) {
 }
 
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&", "<": "<", ">": ">", [String.fromCharCode(34)]: """, [String.fromCharCode(39)]: "'" }[c]));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ [String.fromCharCode(38)]: String.fromCharCode(38,97,109,112,59), [String.fromCharCode(60)]: String.fromCharCode(38,108,116,59), [String.fromCharCode(62)]: String.fromCharCode(38,103,116,59), [String.fromCharCode(34)]: String.fromCharCode(38,113,117,111,116,59), [String.fromCharCode(39)]: String.fromCharCode(38,35,51,57,59) }[c]));
 const ncmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
 const fmt = n => n == null ? "–" : String(Math.round(n * 100) / 100);
 

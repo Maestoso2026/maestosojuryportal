@@ -1538,7 +1538,12 @@ function renderJuries() {
 }
 
 // Start application when document is ready
-document.addEventListener("DOMContentLoaded", initApp);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
+initFirebase();
 </script>
 </body>
 </html>

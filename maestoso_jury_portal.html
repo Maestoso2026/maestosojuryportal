@@ -723,7 +723,7 @@ function initFirebase() {
           render(true);
         }
       } else if (!cloudReady) {
-        setDoc(docRef, sanitizeForFirestore(serializeState()), { merge: true }).catch(() => {});
+        setDoc(docRef, serializeState(), { merge: true }).catch(() => {});
       }
       cloudReady = true;
       State.syncStatus = "live";

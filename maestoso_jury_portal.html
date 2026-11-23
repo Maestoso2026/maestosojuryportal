@@ -526,28 +526,6 @@ function defaultSheetsMap() {
   ]);
 }
 
-function toMapSafe(raw) {
-  if (raw instanceof Map) return raw;
-  let val = raw;
-  if (typeof val === "string") {
-    try { val = JSON.parse(val); } catch { return new Map(); }
-  }
-  if (Array.isArray(val)) {
-    const entries = val
-      .map(item => {
-        if (Array.isArray(item) && item.length === 2) return item;
-        if (item && typeof item === "object" && item.id != null) return [String(item.id), item];
-        return null;
-      })
-      .filter(Boolean);
-    return new Map(entries);
-  }
-  if (val && typeof val === "object") {
-    return new Map(Object.entries(val));
-  }
-  return new Map();
-}
-  
 function hydrateFromObject(obj, prevUid) {
   if (!obj) return;
   if (obj.event) {
@@ -558,32 +536,23 @@ function hydrateFromObject(obj, prevUid) {
       venue: obj.event.venue ?? "TAR UMT @ Tanjung Bungah, Penang"
     };
   }
-  if (obj.participants) {
-    State.participants = toMapSafe(obj.participants);
+  if (Array.isArray(obj.participants) && obj.participants.length) {
+    State.participants = new Map(obj.participants);
   }
-  if (obj.juries) {
-    State.juries = toMapSafe(obj.juries);
+  if (Array.isArray(obj.juries) && obj.juries.length) {
+    State.juries = new Map(obj.juries);
   }
-  if (obj.sheets) {
+  if (Array.isArray(obj.sheets)) {
     const nextSheets = defaultSheetsMap();
-    const sheetEntries = obj.sheets instanceof Map
-      ? Array.from(obj.sheets.entries())
-      : Array.isArray(obj.sheets)
-        ? obj.sheets
-        : typeof obj.sheets === "object"
-          ? Object.entries(obj.sheets)
-          : [];
-    for (const [uid, entries] of sheetEntries) {
-      if (uid != null) {
-        nextSheets.set(String(uid), toMapSafe(entries));
-      }
+    for (const [uid, entries] of obj.sheets) {
+      nextSheets.set(uid, new Map(Array.isArray(entries) ? entries : []));
     }
     State.sheets = nextSheets;
   }
   const activeUid = linkCfg.lockedJury ? linkCfg.uid : (prevUid || State.uid);
   State.me = State.juries.get(activeUid) || INITIAL_JURIES[activeUid] || INITIAL_JURIES.u_valentino;
 }
-  
+
 function serializeState() {
   return {
     event: State.event,

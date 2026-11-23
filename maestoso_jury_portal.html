@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maestoso Jury Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f5f9; --surface:#ffffff; --sunken:#eaedf4; --ink:#171a2d; --muted:#58607a; --line:#d7dce8;
+  --accent:#1b2559; --on-accent:#ffffff; --gold:#b28522; --gold-soft:#f9f3e5;
+  --good:#1d7044; --good-soft:#e3f3e9; --warn:#a05d05; --warn-soft:#fef3e2; --bad:#b9251c; --bad-soft:#fce8e6;
+  --display:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --shadow:0 4px 20px -2px rgba(27,37,89,0.06), 0 2px 6px -1px rgba(0,0,0,0.04);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f111a; --surface:#181b29; --sunken:#131522; --ink:#eaedfa; --muted:#9da4c4; --line:#272b42;
+    --accent:#dfbd6e; --on-accent:#1a1608; --gold:#e5c475; --gold-soft:#2a2312;
+    --good:#64d896; --good-soft:#112a1c; --warn:#f6be62; --warn-soft:#2f220d; --bad:#ff857d; --bad-soft:#3a1816;
+    --shadow:0 6px 24px -4px rgba(0,0,0,0.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f111a; --surface:#181b29; --sunken:#131522; --ink:#eaedfa; --muted:#9da4c4; --line:#272b42;
+  --accent:#dfbd6e; --on-accent:#1a1608; --gold:#e5c475; --gold-soft:#2a2312;
+  --good:#64d896; --good-soft:#112a1c; --warn:#f6be62; --warn-soft:#2f220d; --bad:#ff857d; --bad-soft:#3a1816;
+  --shadow:0 6px 24px -4px rgba(0,0,0,0.4);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--gold)}
+.num{font-variant-numeric:tabular-nums}
+
+/* Header Masthead */
+.mast{background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 2px 10px rgba(0,0,0,0.02)}
+.mast-in{max-width:1280px;margin:0 auto;padding:18px 24px 0;display:grid;gap:16px}
+.mast-top{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.keys{display:flex;gap:3px;height:28px;align-items:flex-end;margin-bottom:4px}
+.keys i{display:block;width:6px;background:var(--ink);border-radius:1px}
+.keys i:nth-child(odd){height:28px} .keys i:nth-child(even){height:18px;background:var(--gold)}
+.brand{display:flex;gap:14px;align-items:flex-end}
+.brand h1{font-size:32px;letter-spacing:-0.01em}
+.brand .meta{color:var(--muted);font-size:14px;margin-top:2px}
+.role-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--sunken);border:1px solid var(--line);font-size:13px;font-weight:600;white-space:nowrap}
+.chip.gold{background:var(--gold-soft);border-color:transparent;color:var(--gold)}
+.chip.good{background:var(--good-soft);border-color:transparent;color:var(--good)}
+.chip.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.chip.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:1px}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 16px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all 0.15s ease}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:13px;font-weight:600}
+.linkbtn:hover{color:var(--gold)}
+
+main{max-width:1280px;margin:0 auto;padding:24px}
+.banner{max-width:1280px;margin:12px auto 0;padding:0 24px}
+.note{padding:12px 16px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.note.info{background:var(--sunken);color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;box-shadow:var(--shadow)}
+.stack{display:grid;gap:18px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 16px;font-weight:600;cursor:pointer;transition:all 0.15s ease}
+.btn:hover{border-color:var(--muted);background:var(--sunken)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn.primary:hover{opacity:0.9}
+.btn.danger{color:var(--bad);border-color:var(--line)}
+.btn.danger.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.field{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea,.tin{font-weight:400;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%;transition:border-color 0.15s ease}
+.field input:focus,.field select:focus,.field textarea:focus,.tin:focus{border-color:var(--gold);outline:none}
+.field textarea{resize:vertical}
+.grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:end}
+
+/* Jury Scoring View */
+.jury-layout{display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start}
+.rail{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:sticky;top:16px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.rail-head{padding:16px 18px;border-bottom:1px solid var(--line);display:grid;gap:10px;background:var(--surface)}
+.progress-bar{height:6px;background:var(--sunken);border-radius:3px;overflow:hidden}
+.progress-bar>i{display:block;height:100%;background:var(--gold);transition:width 0.3s ease}
+.rail-list{overflow-y:auto;padding:6px 0}
+.gh{padding:10px 18px 6px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);background:var(--sunken);margin-bottom:4px;line-height:1.35}
+.gh small{display:block;font-size:10px;color:var(--gold);font-weight:700;margin-top:1px}
+.pitem{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-left:4px solid transparent;padding:10px 18px;cursor:pointer;transition:background 0.15s ease}
+.pitem:hover{background:var(--sunken)}
+.pitem[aria-current="true"]{background:var(--gold-soft);border-left-color:var(--gold)}
+.pitem .no{color:var(--muted);font-size:13px;font-weight:600}
+.pitem .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--line);display:inline-block}
+.dot.part{border-color:var(--warn);background:linear-gradient(90deg,var(--warn) 50%,transparent 50%)}
+.dot.done{border-color:var(--good);background:var(--good)}
+.st{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600}
+
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:28px 32px;display:grid;gap:24px;box-shadow:var(--shadow)}
+.sheet-head{display:grid;gap:6px;border-bottom:1px solid var(--line);padding-bottom:18px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold)}
+.sheet-head h2{font-size:36px}
+.facts{display:flex;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:15px}
+.facts b{color:var(--ink);font-weight:600}
+.scorelink{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-size:14px}
+.crit{display:grid;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.crow{display:grid;grid-template-columns:1fr 120px 48px;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--line);background:var(--surface)}
+.crow:first-child{border-top:0}
+.crow label{font-family:var(--display);font-size:22px;font-weight:600}
+.crow input{width:100%;text-align:right;font-size:20px;font-weight:700;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-variant-numeric:tabular-nums}
+.crow input.invalid{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.crow .out{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
+.crow.total{background:var(--sunken)}
+.crow.total label{font-family:var(--body);font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em}
+.crow.total .tv{text-align:right;font-size:28px;font-weight:700;padding-right:12px;font-variant-numeric:tabular-nums;color:var(--gold)}
+.comments textarea{min-height:160px;font-size:15px;line-height:1.5}
+.sheet-foot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:8px}
+.save{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.save.err{color:var(--bad);font-weight:600}
+.hint{font-size:13px;color:var(--bad);min-height:18px}
+
+/* Tables & Lists */
+.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:700;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--sunken);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.rank{display:inline-grid;place-items:center;min-width:32px;height:32px;border-radius:50%;font-weight:700;background:var(--sunken);font-variant-numeric:tabular-nums;font-size:14px}
+.rank.r1{background:var(--gold);color:var(--on-accent)}
+.rank.r2,.rank.r3{background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold)}
+tr.res{cursor:pointer;transition:background 0.15s ease}
+.tr.det td{background:var(--bg);padding:18px}
+.det-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.det-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px}
+.det-card.summary{background:var(--gold-soft);border-color:var(--gold)}
+.det-card h4{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold)}
+.mini{display:grid;grid-template-columns:1fr auto;gap:4px 14px;font-size:14px}
+.cmt{white-space:pre-wrap;font-size:14px;border-top:1px solid var(--line);padding-top:10px;color:var(--muted);font-style:italic}
+.avg{font-weight:700;font-size:18px;color:var(--accent)}
+.cat-h{display:flex;align-items:baseline;gap:14px;margin:14px 0 10px;flex-wrap:wrap}
+.cat-h h3{font-size:28px}
+.pt td{padding:8px 12px}
+.pt .tin{padding:6px 10px;min-width:90px}
+.pt .tin.no{width:60px;min-width:60px;text-align:center}
+.pt .tin.url{min-width:200px}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.fbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.15s ease}
+.fbtn:hover{border-color:var(--muted)}
+.fbtn[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
+
+.onb{max-width:540px;margin:40px auto;display:grid;gap:20px}
+.onb h2{font-size:34px}
+.choice{display:grid;gap:10px}
+.choice label{display:flex;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-weight:600;transition:all 0.15s ease}
+.choice label:hover{border-color:var(--muted);background:var(--sunken)}
+.choice label:has(input:checked){border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+
+.modal{position:fixed;inset:0;background:rgba(10,12,24,0.6);backdrop-filter:blur(3px);display:grid;place-items:center;padding:20px;z-index:100}
+.modal .card{width:min(720px,100%);display:grid;gap:16px}
+.modal textarea{width:100%;min-height:280px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.4}
+
+@media (max-width:860px){
+  .jury-layout{grid-template-columns:1fr}
+  .rail{position:static;max-height:none}
+  .rail-list{max-height:280px}
+  .sheet{padding:20px}
+  .det-grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="mast-in">
+    <div class="mast-top">
+      <div class="brand">
+        <div class="keys" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div>
+          <h1 id="evTitle">Maestoso Piano Competition 2026</h1>
+          <div class="meta" id="evMeta">Finals Sessioning for Gold Medalists · 29 November 2026 · TAR UMT @ Tanjung Bungah, Penang</div>
+        </div>
+      </div>
+      <div class="role-controls" id="roleControls"><span class="chip">Initializing...</span></div>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+  </div>
+</header>
+
+<div class="banner" id="banner"></div>
+
+<main id="main">
+  <div class="card empty">
+    <p>Loading the jury portal application...</p>
+  </div>
+</main>
+
+<div id="modalHost"></div>
+
+<script>
+/**
+ * Maestoso Jury Portal - Core Application State & Logic
+ */
+const CRITERIA = [
+  ["accuracy", "Accuracy & Fidelity"],
+  ["tone", "Tone & Touch Shape"],
+  ["rhythm", "Rhythm & Tempo"],
+  ["technique", "Technique & Articulation"],
+  ["musicality", "Musicality & Expression"]
+];
+
+const SLOTS = {
+  J1: "Jury 1",
+  J2: "Jury 2",
+  TEST: "Test Seat (Not Counted)"
+};
+
+const AWARDS = [
+  "Champion", "1st Runner-Up", "2nd Runner-Up", 
+  "Gold Award", "Silver Award", "Bronze Award", 
+  "Merit", "Honourable Mention"
+];
+
+// Exact Schedule Order & Session Details
+const SCHEDULE_ORDER = [
+  // Session 1: 9.30am - 1pm
+  "Grade 3 (Group A)",
+  "Grade 6",
+  "Grade 7",
+  "Grade 8",
+  // Session 2: 2pm - 4pm
+  "Initial Grade",
+  "Grade 1 (Group A)",
+  "Grade 2 (Group A)",
+  "Grade 3 (Group B)",
+  // Session 3: 4.30pm - 7pm
+  "Grade 1 (Group B)",
+  "Grade 2 (Group B)",
+  "Grade 4",
+  "Grade 5"
+];
+
+const SESSION_META = {
+  "Grade 3 (Group A)": "Session 1 · 9:30am – 1:00pm",
+  "Grade 6": "Session 1 · 9:30am – 1:00pm",
+  "Grade 7": "Session 1 · 9:30am – 1:00pm",
+  "Grade 8": "Session 1 · 9:30am – 1:00pm",
+  "Initial Grade": "Session 2 · 2:00pm – 4:00pm",
+  "Grade 1 (Group A)": "Session 2 · 2:00pm – 4:00pm",
+  "Grade 2 (Group A)": "Session 2 · 2:00pm – 4:00pm",
+  "Grade 3 (Group B)": "Session 2 · 2:00pm – 4:00pm",
+  "Grade 1 (Group B)": "Session 3 · 4:30pm – 7:00pm",
+  "Grade 2 (Group B)": "Session 3 · 4:30pm – 7:00pm",
+  "Grade 4": "Session 3 · 4:30pm – 7:00pm",
+  "Grade 5": "Session 3 · 4:30pm – 7:00pm"
+};
+
+function catRank(c) {
+  const idx = SCHEDULE_ORDER.indexOf(c);
+  return idx === -1 ? 999 : idx;
+}
+
+const STORAGE_KEY = "maestoso_jury_portal_v4_2026";
+
+// Pre-populated 133 Participants in Exact Revised Schedule Order
+const RAW_SCHEDULE = [
+  // Session 1: 9.30am - 1pm - 3A, 6, 7, 8
+  [1, "Grade 3 (Group A)", "Tan Jey You", "Anastasia by Ailbhe Mcdonagh", "ABRSM 2021-2022", "https://drive.google.com/open?id=1MtblFim8hGdBtb7FBwP0PJWP1M0hVBL5"],
+  [2, "Grade 3 (Group A)", "Olivia Lok Wen Qi", "Allegro (Op.12 No.5) by Hook", "", "https://drive.google.com/file/d/1Ej4ALN9oFtMSHY4I37EXQH39t9kg5R5r/view?usp=drive_link"],
+  [3, "Grade 3 (Group A)", "Rachael Lim", "Allegretto by Bela Bartok", "ABRSM 2025-2026", "https://drive.google.com/open?id=1ZeKdrTR_ibYhkUfMtJfpTBjL5-UKkrzJ"],
+  [4, "Grade 3 (Group A)", "Julius Ling Wen Jie", "Proud Horseman (Op.47 No.2) by Robert Fuchs", "Trinity", "https://drive.google.com/file/d/1iBo5iSCS3rr96SBg-FpvfqkeWAphfPnr/view?usp=drivesdk"],
+  [5, "Grade 3 (Group A)", "Chung Ai Li", "Always with Me by Youmi Kimura", "ABRSM 2025-2026", "https://drive.google.com/file/d/1AkCI9-LVmZNTCTRyaaAYHkBzrd3epyz-/view?usp=drive_link"],
+  [6, "Grade 3 (Group A)", "Lai Jun Wei", "The Spanish Guitar by William Gillock", "ABRSM 2023-2024", "https://drive.google.com/open?id=1eOvfBcEaoS4MriACpedxNIdwD6Curcyx"],
+  [7, "Grade 3 (Group A)", "Glynis Oh Tang Ning", "Tarantella Twist by Victoria Proudler", "ABRSM 2025-2026", "https://drive.google.com/open?id=1zhwFZNa0wDP2CtA4QBa9CR9L9YdGuyop"],
+  [8, "Grade 3 (Group A)", "Song Jue Khai", "THE MUPPET SHOW THEME BY JIM HENSON AND SAM POTTLE", "", "https://drive.google.com/open?id=1EQDNVmS86PP7tz3VBRhf7OYP04ob4SjN"],
+  [9, "Grade 3 (Group A)", "Chester Teoh Tzi Ler", "Minuet in F K.5 by W.A.Mozart", "ABRSM 2027-2028", "https://drive.google.com/file/d/1DLF0n_Ymopi132WaYgFu0vnx5xUqbDr8/view?usp=drive_link"],
+  [10, "Grade 3 (Group A)", "Law Zhi Yao", "Always with Me", "ABRSM 2025-2026", "https://drive.google.com/file/d/1lC6bzhbubdcV69xNOGf3VwUBtd9Vlept/view?usp=drive_link"],
+  [11, "Grade 3 (Group A)", "Desmond James Theng", "Scary Stuff by Sarah Watts", "ABRSM 2021-2022", "https://drive.google.com/file/d/1aEi3ec9xL9k2q9hIp8gCYUU-DDuUmB6z/view?usp=drive_link"],
+  [12, "Grade 3 (Group A)", "Bay Phey En", "Flamenco by William Gillock", "ABRSM", "https://drive.google.com/file/d/1MkKMtR2gdaozQWy-aL3JrRHZOOfSRfKn/view?usp=sharing"],
+
+  [1, "Grade 6", "Ch'ng Jie Yu", "Solfeggietto in C minor, Wq.117/2 by C.P.E. Bach", "ABRSM 2027-2028", "https://drive.google.com/open?id=1IUv1nWieSQo8O2Ytaj0mXmjui9T_ySA8"],
+  [2, "Grade 6", "Chong Hong Min", "Rumba Toccata by Paul R. Harvey", "ABRSM 2025-2026", "https://drive.google.com/file/d/14Bj1ZRLkntz98wJPyH_yx4otXJRYvUwX/view?usp=drive_link"],
+  [3, "Grade 6", "Stello Wong Ruo Xi", "The Buccaneer (Op.36) by Arnold", "", "https://drive.google.com/open?id=17e6IAdhSaNSaB8VmpHbB_KvTj0j5PkaJ"],
+  [4, "Grade 6", "Chong Chun Wei", "Waltz in A Minor by Chopin", "ABRSM 2025-2026", "https://drive.google.com/file/d/1GjZ3RJ-o_lxJSA3WI_QgRqOvcV7ZUDYD/view?usp=drive_link"],
+  [5, "Grade 6", "Abby Koo Yu Jie", "Last Song by Alexis Ffrench", "", "https://drive.google.com/open?id=1BD_HBe97bVc3KOC8Da1xlrLcbqJpU6TS"],
+  [6, "Grade 6", "Chloe Chew Chai Xuan", "Rumba Toccata by Paul Harvey", "ABRSM 2025-2026", "https://drive.google.com/open?id=1hlB8OOKDH2bvNGoc-W5hbY9i8X3v2Cf8"],
+  [7, "Grade 6", "Boetius Ho Onn Hin", "Galop Final by Casella", "ABRSM 2025-2026", "https://drive.google.com/file/d/105XaociVKzs_H3CZA-LjDjfmnpirzcW6/view?usp=drive_link"],
+  [8, "Grade 6", "Lai Ming Han", "Velocity op109 no 10 by JFF BURGMULLER", "ABRSM 2025-2026", "https://drive.google.com/open?id=1sX855DmG0taRvtnd8LOZOokvlaBrtiuI"],
+  [9, "Grade 6", "Ch'ng Le Shuen", "Silhouette (Op.8 No.11) by Dvorak", "", "https://drive.google.com/file/d/18n2Zz30_4tLKmspexPoNwRIom9C6SorE/view?usp=drivesdk"],
+
+  [1, "Grade 7", "Keong Yu Shen", "La Sarabande by Grovlez", "", "https://drive.google.com/file/d/18km_LQPFL55kebdUB8l7f-jeKEWUQmpB/view?usp=drive_link"],
+  [2, "Grade 7", "Jayden Oh Jun Yik", "Allegretto by Bohuslav Martinů", "ABRSM 2023-2024", "https://drive.google.com/open?id=1KLMsZV_mUWRGBxYVehApLDwjcFRnffsV"],
+  [3, "Grade 7", "Oscar Lok Min Shen", "Chanson du Chasseur (No.4 from L'Almanach aux Images) by Grovlez", "", "https://drive.google.com/file/d/1HiRHHgqPQ-CsTD8zGM8RpDoHSfMgSt_Y/view?usp=drivesdk"],
+  [4, "Grade 7", "Goh Shu Zen", "Bagatelle In E Major Op.33 No.1 by Ludwig Van Beethoven", "ABRSM Grade 7 2021-2022", "https://drive.google.com/open?id=1zCgKIX37B9_vultRcWM4xeie3uQJjAh9"],
+  [5, "Grade 7", "Charlotte Ooi Qwien Erl", "Merry Christmas, Mr Lawrence by Ryuichi Sakamoto", "Trinity from 2023", "https://drive.google.com/open?id=1-OmaqxnD57Pj8nSfabPifI7vkUoMnySW"],
+  [6, "Grade 7", "Lee Ao", "Le Coucou by Louis Claude", "", "https://drive.google.com/open?id=1b4y9jNeZcIKEfviH3-Mh-2t0tquOqC1l"],
+  [7, "Grade 7", "Wang Zhou Yang", "Lowside Blues by Joanna MacGregor", "", "https://drive.google.com/file/d/1OKE2SXEz-6PRhNaJiisY753yBK9FUzZg/view?usp=drivesdk"],
+  [8, "Grade 7", "Lim Eu Shen", "Presto by Kabalevsky", "", "https://drive.google.com/file/d/1yyVUEA2oRrxlLtiMaogCKb507k5RDR00/view?usp=drivesdk"],
+
+  [1, "Grade 8", "Daniel Teh Zhu-En", "Maple Leaf Rag by Scott Joplin", "ABRSM 2025-2026", "https://drive.google.com/open?id=1yS-w4H3OmHz9SxNAyfIgK0Qflmo8797V"],
+  [2, "Grade 8", "Lau En Ting", "Danny Boy, arr. Iles (Trad. Irish)", "", "https://drive.google.com/file/d/1SyWvcVzdS2G66oSerpoaXCFdLvHbWIHp/view?usp=drivesdk"],
+  [3, "Grade 8", "Peyton Ooi Yue Then", "Nocturne in E minor, Op.72 No.1", "", "https://drive.google.com/file/d/1ZsbyNlr2vNa2RXV1H7CoBX5OYB__KeFV/view?usp=drivesdk"],
+  [4, "Grade 8", "Tan Tze Chia", "Keyboard Sonata in C Major, K.513 by Scarlatti", "ABRSM 2025-2026", "https://drive.google.com/open?id=1Ahe7NR7LvKExmGK8gO6aTaq3TO_8JD8A"],
+  [5, "Grade 8", "Choo Yi Zhe", "Il pleut by Mélanie Bonis", "", "https://drive.google.com/file/d/1IvfvT8Xv3u-55wIHd4HfMwuqwDiDVZre/view?usp=drivesdk"],
+
+  // Session 2: 2pm - 4pm - Initial, 1A, 2A, 3B
+  [1, "Initial Grade", "Siena Wong Ruo Yen", "The Elephant Herd by June Armstrong", "", "https://drive.google.com/file/d/189UW8kl3hQ3dMHY79Qx--ptcfc8o_m5n/view?usp=drive_link"],
+  [2, "Initial Grade", "Ch'ng Yu", "Make Way for the King by Pam Wedgwood", "", "https://drive.google.com/file/d/1DAiPa4U-xb8_J9aFzUcS_KN-CimYpyY8/view?usp=drivesdk"],
+  [3, "Initial Grade", "Isaac Lau Min Tong", "Elephant Herd by June Armstrong", "", "https://drive.google.com/file/d/1i-E4IAULFGv75vyveBuc4ckXp6Wz4Hrh/view?usp=drive_link"],
+  [4, "Initial Grade", "Grace Low Zi Qin", "A Waltz that's a Little Melancholy by Ruth Schonthal", "ABRSM", "https://drive.google.com/file/d/1CilwKhkMcDbMlTPp2UxAl6wxlsz4EuVM/view?usp=drivesdk"],
+  [5, "Initial Grade", "Jovelle Ng Qian Rui", "Swans and Ducks by F. Waterman & M. Harewood", "", "https://drive.google.com/file/d/1OJNElXb2QJZHMpDcDJHiX-DZfPo3mGME/view?usp=drivesdk"],
+  [6, "Initial Grade", "Rohan Mohan", "Captain Hook's Rockin' Party", "", "https://drive.google.com/open?id=1o81Owe3Pr_Dns0DL3pAEAVjG36g64tOW"],
+  [7, "Initial Grade", "Edelweiss Neoh", "King of a Day by Ben Crosland", "ABRSM 2025-2026", "https://drive.google.com/open?id=1gy3ZszOMNBV3fas8VhMFPPihONvAIR5s"],
+  [8, "Initial Grade", "Yeap Raey Ern", "Busy, Buzzy Bumblebee by Ailie Robertson", "ABRSM 2027-2028", "https://drive.google.com/file/d/1ug-YwdD_4HOILB3tQcMquNrSiS1RHw2l/view?usp=drivesdk"],
+  [9, "Initial Grade", "Seah Khang Horng", "Mission Impossible", "", "https://drive.google.com/file/d/1lpYfe1t3Rkj-jp9FCYQux7nlaLTyTwbZ/view?usp=sharing"],
+  [10, "Initial Grade", "Ariel Mah Yun Hee", "Fairground by John Rowcroft", "ABRSM 2027", "https://drive.google.com/file/d/1-_4vml7jzdczV34CAb_QX5x6niKq_kUj/view?usp=drivesdk"],
+  [11, "Initial Grade", "Tan Xuan En", "Gopak by Alan Houghton", "ABRSM 2025", "https://drive.google.com/file/d/1YB7U8qDhUVLMrvg-uJYxtvCkkmh90q5U/view?usp=drivesdk"],
+  [12, "Initial Grade", "Jasper Tan Zhi Xuan", "The Elephant Herd by June Armstrong", "ABRSM 2025", "https://drive.google.com/file/d/1ztYQ8_CqXkHy4rTmNgLhhlKlxa58eNB5/view?usp=drivesdk"],
+  [13, "Initial Grade", "Javieer Chuah Guanh Honng", "Busy, Buzzy Bumblebee by Ailie Robertson", "", "https://drive.google.com/file/d/1EwMpV5QaoZtQcl724mJB9akTy7i3cp0c/view?usp=drivesdk"],
+  [14, "Initial Grade", "Chloe Sim Jia Yi", "Swans and Ducks by F. Waterman & M. Harewood", "", "https://drive.google.com/file/d/1DbwcueHsbQXrROVmYBWIZXJ5CWSJ4ruD/view?usp=sharing"],
+  [15, "Initial Grade", "Lee Yen Kye", "Always With Me by Youmi Kimura & Wakako Kaku, arr. Michael Csányi-Wills", "Trinity", "https://drive.google.com/file/d/1Ha0766VgWBZToQXrIwd1wutbMGOVYrUW/view?usp=drivesdk"],
+  [16, "Initial Grade", "Koh Kang Zhi", "Make Way for the King! by Pam Wedgwood", "ABRSM 2025", "https://drive.google.com/file/d/1Zq_byejTB9owIeF5PNWBXUDxc6SB8_jW/view?usp=drivesdk"],
+  [17, "Initial Grade", "Jessie Lim Zi Qing", "Swans and Ducks by Fanny Waterman and Marion Harewood", "ABRSM", "https://drive.google.com/file/d/14Wuz5UCFzxWfMl2idCmX7f9muLIPDMrD/view?usp=drive_link"],
+
+  [1, "Grade 1 (Group A)", "Chong Tze Ning", "Melody in F by Kohler", "ABRSM 2025-2026", "https://drive.google.com/open?id=1u6YgT7_fSUcUJo5p4ruDIUNOilpuH7ah"],
+  [2, "Grade 1 (Group A)", "Tay Hao Xuan", "Berry’s Smoothie by Nikki Yeoh", "ABRSM 2025-2026", "https://drive.google.com/open?id=1ZoQiUfnK1Kc_iPEX3WulgvUNsX3TPQhr"],
+  [3, "Grade 1 (Group A)", "Teh Chia Ro", "Chris's Song by Janina Garscia", "Trinity", "https://drive.google.com/file/d/10eodtBC3sDKapqx9q7GYc4lV88XQrGVm/view?usp=sharing"],
+  [4, "Grade 1 (Group A)", "Tee Qi Ying", "A Song of Erin by Thomas Dunhill", "ABRSM 2025-2026", "https://drive.google.com/file/d/1geC0kDjIPTwq9CxFCkwL8Ny1qgccziIF/view?usp=drivesdk"],
+  [5, "Grade 1 (Group A)", "Tan Kher Yuu", "Cyberspace Detective by Amit Anand", "ABRSM 2025-2026", "https://drive.google.com/file/d/1WmfJWSlzw0DF8rJ0iGbxgkDGHTOHNRvK/view?usp=sharing"],
+  [6, "Grade 1 (Group A)", "Lim Yu Ze", "Stealth Mode by Melody Bober", "Trinity 2021-2023", "https://drive.google.com/open?id=1Ua0CS81uUquU6Q9lY44ZHz8uCxnOJ9m4"],
+  [7, "Grade 1 (Group A)", "Archie Lee You Zhe", "The Little White Cloud by Jessie Blake", "ABRSM", "https://drive.google.com/file/d/1ur08qWxH3zAozcxF8OjRAxcN_E9MF3aJ/view?usp=drivesdk"],
+  [8, "Grade 1 (Group A)", "Joie Cheong Xin Ern", "A Morning Sunbeam by Florence B. Price", "ABRSM", "https://drive.google.com/file/d/1WBz4DsCs-K3hDha-hMwcoLcmy3a_EaSf/view?usp=sharing"],
+  [9, "Grade 1 (Group A)", "Joyce Nina Tan", "Berry’s Smoothie by Nikki Yeoh", "ABRSM 2025-2026", "https://drive.google.com/file/d/1t3ONri5_U8rHkIxSsTFBm53vp2p4DBFx/view?usp=sharing"],
+  [10, "Grade 1 (Group A)", "Ava Eng Yee Jie", "Remember Me by Kristen Anderson-Lopez and Robert Lopez", "", "https://drive.google.com/open?id=1GLs-mmqyg8qJkASPz5I3K5JmjC8KfN8U"],
+  [11, "Grade 1 (Group A)", "Lem Jencey", "A Song of Erin by Thomas Dunhill", "ABRSM 2025-2026", "https://drive.google.com/open?id=1ydjWYHDybEXes0-YIxmsY2xe9Px37vps"],
+  [12, "Grade 1 (Group A)", "Bowen Lee", "What Was I Made For? by Billie Eilish & Finneas O'Connell (arr. Joseph Atkins)", "ABRSM 2027", "https://drive.google.com/file/d/1nNujF4abs0QxNH3dqlVQhhdWWBQP6jws/view?usp=drivesdk"],
+  [13, "Grade 1 (Group A)", "Louise Glaubitz", "Cyberspace Detective by Amit Anand", "ABRSM", "https://drive.google.com/file/d/1SbHFydfBYPmkhJMVkxmujhHmuVfmD5ty/view?usp=drivesdk"],
+  [14, "Grade 1 (Group A)", "Phoebe Ooi Jen Faye", "The Swing by Chee-Hwa Tan", "", "https://drive.google.com/file/d/1DCSzla-eN8flGAM0RMZFj60H7BK6ZOsQ/view?usp=drivesdk"],
+
+  [1, "Grade 2 (Group A)", "Loh Yan Jie", "Tarantella by Agnieska Lasko", "ABRSM 2023-2024", "https://drive.google.com/open?id=1249dtEzQmkYcRYU_xKPtCcxyPxb7Q5ZL"],
+  [2, "Grade 2 (Group A)", "Emily Cheah Hui Ying", "Angelfish by Anne Crosby Gaudet", "ABRSM 2021-2022", "https://drive.google.com/file/d/1TafzXIc1tEYkmuafrqyqeoe8F1jRnBww/view?usp=drive_link"],
+  [3, "Grade 2 (Group A)", "Teh Shin Yaa", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=1W3zNyKuWpRiIA224GVpfeq0V2roKiOnm"],
+  [4, "Grade 2 (Group A)", "Cheong Kai Siang", "Sneaky Surprise by Sebastian Ooi Wei Chern", "ABRSM 2027", "https://drive.google.com/file/d/1xg-GwgIvtsouwjey9iG79v68JAHUBjFJ/view?usp=drivesdk"],
+  [5, "Grade 2 (Group A)", "Evelyn Leow Xuan Yi", "Circling Gulls by Joan Last", "ABRSM 2027", "https://drive.google.com/file/d/1054vOHN4zp_kwj7OE4nz2_I5Yipj01Nv/view?usp=drive_link"],
+  [6, "Grade 2 (Group A)", "Tan Yi Wen", "Cloudy Day by Christopher Norton", "ABRSM", "https://drive.google.com/file/d/12QRQOqMCFiB70JNz46FkqmF41NFquC5g/view?usp=drive_link"],
+  [7, "Grade 2 (Group A)", "Say Ker Qi", "Moderato by Ludwig Van Beethoven", "ABRSM 2025-2026", "https://drive.google.com/open?id=1XJ2fPf01wy243vfYm8T63TVn00Iv7gGt"],
+  [8, "Grade 2 (Group A)", "Aariz Aryan Bin Aimi Fakhri", "Ja-Da by Bob Carleton", "ABRSM 2019-2020", "https://drive.google.com/open?id=1Mwrh--llG5QL1SOe5I5b5E0FZr43AcTQ"],
+  [9, "Grade 2 (Group A)", "Haarsheeta Prebesh", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=1s0Btdyvb-0-Ag5Dkm9fqQ-lpT7IK2oqQ"],
+  [10, "Grade 2 (Group A)", "Soo Yeuk Hei", "Allegro in C by Johann Hässler", "Trinity", "https://drive.google.com/open?id=1QN7cCkNij0fjAPiJc5G9V5Ja6bodJKhT"],
+  [11, "Grade 2 (Group A)", "Divveshram S/O Balashanmugam", "Sparkling Splashes & Smooth Water by Barbara Arens", "ABRSM 2025-2026", "https://drive.google.com/open?id=1ZRng-j-oAho-DLzRt2GSP-jib16XdmPH"],
+  [12, "Grade 2 (Group A)", "Emilia Cheah Qiao Ru", "Angelfish by Anne Crosby Gaudet", "ABRSM 2021", "https://drive.google.com/file/d/1TafzXIc1tEYkmuafrqyqeoe8F1jRnBww/view?usp=drive_link"],
+  [14, "Grade 2 (Group A)", "Son Yu Ra", "Park Daze by Nikki Yeoh", "ABRSM 2027", "https://drive.google.com/file/d/15li99zTgOuUU3MdnLYNvW-hsJiSr3xpJ/view?usp=drivesdk"],
+  [15, "Grade 2 (Group A)", "Lee Le Xuan", "Spooky Wood Hollow by Heather Hammond", "ABRSM", "https://drive.google.com/file/d/1i-E4IAULFGv75vyveBuc4ckXp6Wz4Hrh/view?usp=drive_link"],
+
+  [1, "Grade 3 (Group B)", "Lye Hui Xin", "Clowns by D.B. Kabalevsky", "ABRSM 2017-2018", "https://drive.google.com/open?id=14m8Cjv1TZoizDEJ-qgPcjWDEM4UXYGOu"],
+  [2, "Grade 3 (Group B)", "Tan Qu Han", "THE MUPPET SHOW THEME BY JIM HENSON AND SAM POTTLE", "", "https://drive.google.com/open?id=131o2NUNr5M8vFojPvrCoa5ab_3w_FOoO"],
+  [3, "Grade 3 (Group B)", "Kayra Lee Ying En", "Rushing River by M. Bober & G. Goranson", "ABRSM", "https://drive.google.com/file/d/1c_PaMXeMz4cKpxJkeviyZTOhuw1vpUaU/view?usp=drive_link"],
+  [4, "Grade 3 (Group B)", "Arthur Princeton Foong", "A Simple Story by Alan Richardson", "ABRSM", "https://drive.google.com/file/d/1cL8cc1DDKLWijsJ_fLy2CSEvAoqOYOk2/view?usp=drivesdk"],
+  [5, "Grade 3 (Group B)", "Tan You Jue", "Kingfisher by Leslie Fly", "ABRSM", "https://drive.google.com/file/d/1Qs7fPf9anBJbu_X9uKiw3182kWFbB40B/view?usp=sharing"],
+  [6, "Grade 3 (Group B)", "Chen Jayee", "LITTLE STREAM by Ilona Junickova", "Trinity 2023", "https://drive.google.com/open?id=18u_8YVIJ2WIfuR8pzUQJDH3-2uLjqjE6"],
+  [7, "Grade 3 (Group B)", "Hing Sze Quinn", "THE MUPPET SHOW THEME BY JIM HENSON AND SAM POTTLE", "", "https://drive.google.com/open?id=1GYtzhjrw5LN4S6K9VhJecJcH7TXmYRLA"],
+  [8, "Grade 3 (Group B)", "Wu Yi Jo", "Allegretto (No.3 from For Children, Vol.2) by Béla Bartók", "ABRSM", "https://drive.google.com/file/d/1ZpAOVDa_v8yW2o1siwM4woeuy5QL2z_h/view?usp=sharing"],
+  [9, "Grade 3 (Group B)", "Song Jie Xuan", "Tarantella Twist by Victoria Proudler", "ABRSM", "https://drive.google.com/file/d/1HjP9S8hnQ3GjWj3W7hpaJAAVuw9C6STf/view?usp=sharing"],
+  [10, "Grade 3 (Group B)", "Juvenna Khoo Yu Ren", "Flamenco by William Gillock", "ABRSM", "https://drive.google.com/file/d/1MkKMtR2gdaozQWy-aL3JrRHZOOfSRfKn/view?usp=sharing"],
+  [11, "Grade 3 (Group B)", "Hing Zi Jian", "ALLEGRO MODERATO BY LOUIS KOHLER", "", "https://drive.google.com/open?id=1H9jL0VaiziBPGZUVTLDMkqHKXs_uUQiX"],
+
+  // Session 3: 4.30pm - 7pm - 1B, 2B, 4, 5
+  [1, "Grade 1 (Group B)", "Cynthia Xin Xijiayue", "Berry’s Smoothie by Nikki Yeoh", "ABRSM 2025-2026", "https://drive.google.com/open?id=1M9HUZPWpZSQfz-7TkHiwTYkyqXZUtqey"],
+  [2, "Grade 1 (Group B)", "Tan Hui Koon", "The Little White Cloud by Jessie Blake", "ABRSM", "https://drive.google.com/file/d/1DQpZmWArhT2vQXR-U4-6ZK32Wg_s5-l8/view?usp=drivesdk"],
+  [3, "Grade 1 (Group B)", "Chia Thong Ning", "A Song of Erin by Thomas Dunhill", "ABRSM 2025-2026", "https://drive.google.com/open?id=1ydjWYHDybEXes0-YIxmsY2xe9Px37vps"],
+  [4, "Grade 1 (Group B)", "Ng Tze Yuin", "Remember Me by Kristen Anderson-Lopez and Robert Lopez", "", "https://drive.google.com/open?id=1GLs-mmqyg8qJkASPz5I3K5JmjC8KfN8U"],
+  [5, "Grade 1 (Group B)", "Loh Yan Yen", "Minuet in C by Alexander Reinagle", "ABRSM 2023-2024", "https://drive.google.com/open?id=1jd89wm4vx2Gz3XFBX71KjYj4ZSshAz6i"],
+  [6, "Grade 1 (Group B)", "Lim Xin Hui", "Cyberspace Detective by Amit Anand", "ABRSM 2025-2026", "https://drive.google.com/open?id=1Am2yCHnnLGmKQSxHtunb1rN2RNJcAlSS"],
+  [7, "Grade 1 (Group B)", "Sarah Wong Xinru", "The Old Cuckoo-Clock by Nina M. Bachinskaya", "ABRSM 2007-2008", "https://drive.google.com/open?id=1NXrLw-5W72io_A3gLLsWKalzrJC89Tl3"],
+  [8, "Grade 1 (Group B)", "Chan Zi Yeon", "German Dance in C by Beethoven", "ABRSM", "https://drive.google.com/file/d/1qa2uWQ2pEHQGVIa6jYTIglO0Qbvg7ArP/view?usp=drivesdk"],
+  [9, "Grade 1 (Group B)", "Woo Eugiie", "Berry's Smoothie by Nikki Yeoh", "ABRSM 2025-2026", "https://drive.google.com/open?id=13M-d6qSbBV0-9De032q0WYVSuMJS7fru"],
+  [10, "Grade 1 (Group B)", "Tan Yu Qi", "Winter by Bernadette Marmion", "ABRSM", "https://drive.google.com/file/d/16AvZnGkqcapJG8aL5s94ssj493mbFaOF/view?usp=drivesdk"],
+  [11, "Grade 1 (Group B)", "Alesha Ang Xiao Sheen", "FIREWORKS MINUET BY G.F HANDEL", "ABRSM 2025-2026", "https://drive.google.com/open?id=1fwg6c03fhw1uFR0TyUxAKN3duJAoyNWi"],
+  [12, "Grade 1 (Group B)", "Nicole Ong Shin Chen", "Berry’s Smoothie by Nikki Yeoh", "ABRSM 2025-2026", "https://drive.google.com/file/d/1t3ONri5_U8rHkIxSsTFBm53vp2p4DBFx/view?usp=sharing"],
+  [13, "Grade 1 (Group B)", "Justin Khor Li Hong", "Minuet in C (Op.1, No.10) by Alexander Reinagle", "ABRSM", "https://drive.google.com/file/d/1i1CrvD4KUxDhQmb2h0VPUpo54Nss9jIt/view?usp=sharing"],
+  [14, "Grade 1 (Group B)", "Ashton Ooi Yann Pynn", "FIREWORKS MINUET BY G.F HANDEL", "ABRSM 2025-2026", "https://drive.google.com/open?id=1fwg6c03fhw1uFR0TyUxAKN3duJAoyNWi"],
+
+  [1, "Grade 2 (Group B)", "Lee Yong Xuan", "Sipkova Ruzenka", "ABRSM 2025-2026", "https://drive.google.com/open?id=1uPOtAJaBLDANMLFtOSR-j89jgli1yj8H"],
+  [2, "Grade 2 (Group B)", "Tytus Teoh", "Sneaky Surprise by Sebastian Ooi Wei Chern", "ABRSM 2027-2028", "https://drive.google.com/file/d/1F8fwUKvilwj8l6EV8AtKs02avTS4NUAv/view?usp=drivesdk"],
+  [3, "Grade 2 (Group B)", "Alston Mak Jin Hao", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=1-LA3z0SW783qpITnCtxJ8TlqYBmAbekf"],
+  [4, "Grade 2 (Group B)", "Thung Tsz Ting Patrick", "Sparkling Splashes and Smooth Water by Barbara Arens", "", "https://drive.google.com/file/d/1cpteZTREw3i-dtu54fYUDvG8Uhmg9R7n/view?usp=sharing"],
+  [5, "Grade 2 (Group B)", "Constance Wang", "Minuet No. 2 in G minor by Christian Petzold", "", "https://drive.google.com/open?id=1dAsEdph1KzZNsC6PpTgAB3iw-Wj1R5Bq"],
+  [6, "Grade 2 (Group B)", "Lau Yi Ja", "Cloudy Day by Christopher Norton", "ABRSM", "https://drive.google.com/file/d/12QRQOqMCFiB70JNz46FkqmF41NFquC5g/view?usp=drive_link"],
+  [7, "Grade 2 (Group B)", "Hailey Khoo Yee Lyn", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=135S3RREKCUFrLWbr2GHYT2pjB_Xlk59Y"],
+  [8, "Grade 2 (Group B)", "Clare Chan Kyler", "Way out West by Pete Letanka", "", "https://drive.google.com/file/d/1FqSXberIUe00ZPjHDvu2q1_p3vCbbFCC/view?usp=drivesdk"],
+  [9, "Grade 2 (Group B)", "Teoh Jia Chen", "A Little Song by Kabalevsky", "ABRSM 2025", "https://drive.google.com/file/d/1XwWMnDIYpoNjRv5RUTCW19YMaeQem3F-/view?usp=drivesdk"],
+  [10, "Grade 2 (Group B)", "Choong Khye Loon", "Champagne Rag by Pam Wedgwood", "ABRSM 2025-2026", "https://drive.google.com/open?id=1Yccx-iiOkOp4sXwAy7ia5wvx-1zWjJXH"],
+  [11, "Grade 2 (Group B)", "Katelyn Isabelle Marudo", "Sipkova Ruzenka (Sleeping Beauty) by Ivana Loudova", "", "https://drive.google.com/file/d/1N18nuLyggvBCohQwP_4SS9jQZT2u3ZGj/view?usp=drivesdk"],
+  [12, "Grade 2 (Group B)", "Aiden Ang Min Bo", "Sparkling Splashes & Smooth Water by Barbara Arens", "ABRSM", "https://drive.google.com/file/d/1cpteZTREw3i-dtu54fYUDvG8Uhmg9R7n/view?usp=sharing"],
+  [13, "Grade 2 (Group B)", "Teoh Kai Yang", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=1kyqEhA7yZZ18kk4M0Pmg5HPfeJQ4FHGj"],
+  [13, "Grade 2 (Group B)", "Gun Xin En", "Sneaky Surprise by Sebastian Ooi Wei Chern", "ABRSM 2027", "https://drive.google.com/file/d/1xg-GwgIvtsouwjey9iG79v68JAHUBjFJ/view?usp=drivesdk"],
+
+  [1, "Grade 4", "Jaden Chan Zheng Hang", "Clockwork Doll by Dmitry Shostakovich", "ABRSM", "https://drive.google.com/file/d/1D61yNs_SdUHt-J6760YfbO2SpmBsd0IT/view?usp=drive_link"],
+  [2, "Grade 4", "Khoh Zi Yuan", "Wallace and Gromit Theme by Julian Nott", "ABRSM 2025-2026", "https://drive.google.com/file/d/1siMCutBUf8VfQDNFQeA4HzaR508WU3dV/view?usp=sharing"],
+  [3, "Grade 4", "Lim Yee Qien", "Moonbeams by Barbara Arens", "ABRSM", "https://drive.google.com/file/d/1c0VhnbtdkhNjLXJaZT6uR-2jFM2EJIG7/view?usp=drivesdk"],
+  [4, "Grade 4", "Seth Quah Wen Zhe", "Study in D by Heller", "ABRSM", "https://drive.google.com/file/d/16X1PWSI7zNT9mzIqT7MVP87w6NI4p-rX/view?usp=drive_link"],
+  [5, "Grade 4", "Lee Yu Faye", "Holiday in Paris by William Gillock", "ABRSM", "https://drive.google.com/file/d/1mBw2UHJabz4AS2PzaIn6RUEA2czEonJ2/view?usp=drivesdk"],
+  [6, "Grade 4", "Liau Fern Chee", "Coachman’s Dance by Jacques Ibert", "ABRSM 2025-2026", "https://drive.google.com/open?id=1k6-tMP-k_Fy9d1ZpwDJRDy9bY_2-NwPA"],
+  [7, "Grade 4", "Law Xyn Yv", "Sunsets in Savannah by Randall Hartsell", "ABRSM", "https://drive.google.com/file/d/1Kb7uYjKOrAJJ8wAHdB4rggqv42quArfr/view?usp=drive_link"],
+  [8, "Grade 4", "Ang Yu Xuan", "Wallace and Gromit Theme by Julian Nott", "ABRSM 2025-2026", "https://drive.google.com/open?id=1eMWmWvTI6h4nwoP-ITrbCblFh2JH2ksL"],
+  [9, "Grade 4", "Rhys Quah Wen Hao", "Alarm by Bjelinski", "ABRSM", "https://drive.google.com/file/d/1pmmsF7HkVR3qS6UXbt1brIjFzFjvDGtP/view?usp=drive_link"],
+  [10, "Grade 4", "Zoey Teh Shi Ern", "Sonatina in C Major (III: Rondo) by William Gillock", "IMTA 2014", "https://drive.google.com/file/d/1udPjMzsLzbEAwe5Ba51yF_PhZsvugTku/view?usp=drivesdk"],
+
+  [1, "Grade 5", "Ooi Ziqi, Emily", "Love Theme by Catherine Rollin", "ABRSM 2025-2026", "https://drive.google.com/file/d/1I20DLarfsw_GicdhGEHKu_rq3PUvoA4s/view?usp=drive_link"],
+  [2, "Grade 5", "Jocelyn Lee Wan Jun", "Someone You Loved by Lewis Capaldi", "ABRSM 2025-2026", "https://drive.google.com/open?id=1Umk7FRQj4PoEfo1kSN-3GB4svt2I4EA8"],
+  [3, "Grade 5", "Lai Ying Yuan", "Spiritoso by Muzio Clementi", "ABRSM 2025-2026", "https://drive.google.com/open?id=1mxFaBUSBv7zX3pSitYn5tAsj3g7F6XAe"],
+  [4, "Grade 5", "Cheung Chi Ling", "Hook's Hornpipe by Nikki Iles", "ABRSM", "https://drive.google.com/file/d/1mo-3or0fyiNNqrJ_Tb3FWIaGBGkvKg7s/view?usp=drivesdk"],
+  [5, "Grade 5", "Bennedsen Tan Tze Yu", "Winter Solstice Song by Bela Bartok", "ABRSM 2025-2026", "https://drive.google.com/open?id=1M8gH6B_TQdvN8-rfeDbCQjVN8fyUFngR"],
+  [6, "Grade 5", "Lavina Liu", "Someone You Loved by Lewis Capaldi", "ABRSM 2025-2026", "https://drive.google.com/open?id=1Umk7FRQj4PoEfo1kSN-3GB4svt2I4EA8"],
+  [7, "Grade 5", "Loo Kai Lin", "Spiritoso by Muzio Clementi", "ABRSM 2025-2026", "https://drive.google.com/file/d/1ApdNP8x4GsJHc9PlFSPnpqGT5xnKts9j/view?usp=drivesdk"],
+  [8, "Grade 5", "Jessica Ong Xin Yee", "Ombrelle versicolore by Danielle Fournier", "ABRSM 2027-2028", "https://drive.google.com/open?id=1UNmA-7LA-YbkxrR5rZ0nOkuBm2q9NVvI"],
+  [9, "Grade 5", "Leen Synn Yii", "Foggy Blues by Naoko Ikeda", "ABRSM 2025-2026", "https://drive.google.com/open?id=12DH8G1yK3rYD8grON1dz786Mfyd6uvpV"],
+  [10, "Grade 5", "Ethan Kan JiaJun", "Evening in the Country by Bartok", "ABRSM", "https://drive.google.com/file/d/1newFDLQhozQspdcrTas_-VZL7JvefAQQ/view?usp=drive_link"]
+];
+
+const INITIAL_PARTICIPANTS = RAW_SCHEDULE.map(([order, category, name, piece, syllabus, scoreLink], idx) => ({
+  id: "p_" + (idx + 1),
+  order,
+  category,
+  name,
+  piece,
+  syllabus,
+  scoreLink,
+  award: ""
+}));
+
+const INITIAL_JURIES = {
+  "u_j1": { name: "Jury 1", slot: "J1", updatedAt: Date.now() },
+  "u_j2": { name: "Jury 2", slot: "J2", updatedAt: Date.now() }
+};
+
+function loadPersistedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function persistState() {
+  try {
+    const payload = {
+      event: State.event,
+      participants: [...State.participants.entries()],
+      juries: [...State.juries.entries()],
+      sheets: [...State.sheets.entries()].map(([uid, m]) => [uid, [...m.entries()]]),
+      me: State.me
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {}
+}
+
+const savedData = loadPersistedState();
+
+const State = {
+  role: "organiser", // "organiser" | "jury"
+  uid: "u_j1",
+  event: savedData?.event || {
+    title: "Maestoso Piano Competition 2026",
+    round: "Finals Sessioning for Gold Medalists",
+    date: "29 November 2026",
+    venue: "TAR UMT @ Tanjung Bungah, Penang"
+  },
+  participants: savedData?.participants
+    ? new Map(savedData.participants)
+    : new Map(INITIAL_PARTICIPANTS.map(p => [p.id, p])),
+  juries: savedData?.juries
+    ? new Map(savedData.juries)
+    : new Map(Object.entries(INITIAL_JURIES)),
+  sheets: savedData?.sheets
+    ? new Map(savedData.sheets.map(([uid, entries]) => [uid, new Map(entries)]))
+    : new Map([["u_j1", new Map()], ["u_j2", new Map()]]),
+  me: savedData?.me || INITIAL_JURIES["u_j1"],
+  editing: new Map(),
+  tab: "results",
+  sel: "p_1",
+  cat: "All",
+  open: new Set(),
+  viewJury: null,
+  onbOpen: false
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ncmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+const fmt = n => n == null ? "–" : String(Math.round(n * 100) / 100);
+
+function safeUrl(u) {
+  u = String(u || "").trim();
+  if (!u) return "";
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+  try {
+    const x = new URL(u);
+    return (x.protocol === "https:" || x.protocol === "http:") ? x.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function catOf(p) { return (p.category || "").trim() || "Uncategorised"; }
+
+function compareCategories(a, b) {
+  const ra = catRank(a), rb = catRank(b);
+  if (ra !== rb) return ra - rb;
+  return ncmp(a, b);
+}
+
+function sortedParts() {
+  return [...State.participants.entries()]
+    .map(([id, d]) => ({ ...d, id }))
+    .sort((a, b) => compareCategories(catOf(a), catOf(b)) || ((Number(a.order) || 9999) - (Number(b.order) || 9999)) || ncmp(a.name || "", b.name || ""));
+}
+function cats() { return [...new Set(sortedParts().map(catOf))]; }
+function scoreVal(sh, k) { const v = sh && sh.scores ? sh.scores[k] : null; return typeof v === "number" && isFinite(v) ? v : null; }
+function filled(sh) { return CRITERIA.filter(([k]) => scoreVal(sh, k) != null).length; }
+function total(sh) {
+  if (filled(sh) < CRITERIA.length) return null;
+  return CRITERIA.reduce((t, [k]) => t + scoreVal(sh, k), 0);
+}
+
+function banner(msg, kind) {
+  $("#banner").innerHTML = msg ? `<div class="note ${kind || ""}">${esc(msg)}</div>` : "";
+}
+
+/** ---------- INITIALIZATION ---------- */
+function initApp() {
+  paintMast();
+  render(true);
+}
+
+/** ---------- MASTHEAD & NAV ---------- */
+function paintMast() {
+  const e = State.event;
+  $("#evTitle").textContent = e.title || "Piano Competition";
+  $("#evMeta").textContent = [e.round, e.date, e.venue].filter(Boolean).join(" · ");
+  document.title = (e.title || "Maestoso") + " · Jury Portal";
+
+  let roleHtml = "";
+  if (State.role === "organiser") {
+    roleHtml += `<span class="chip gold">Organiser Mode</span> `;
+    roleHtml += `<button class="btn small" id="switchRole">Switch to Jury View</button>`;
+  } else {
+    roleHtml += `<span class="chip">${SLOTS[State.me.slot] || State.me.slot}${State.me.name ? " · " + esc(State.me.name) : ""}</span> `;
+    roleHtml += `<button class="linkbtn" id="chgSlot">Change Seat</button> `;
+    roleHtml += `<button class="btn small" id="switchRole">Switch to Organiser View</button>`;
+  }
+  $("#roleControls").innerHTML = roleHtml;
+
+  const b = $("#chgSlot"); if (b) b.onclick = () => { State.onbOpen = true; State.tab = "jury"; render(true); };
+  const s = $("#switchRole"); if (s) s.onclick = () => {
+    State.role = State.role === "organiser" ? "jury" : "organiser";
+    State.tab = State.role === "organiser" ? "results" : "jury";
+    paintMast();
+    render(true);
+  };
+
+  const tabs = State.role === "organiser"
+    ? [["results", "Results & Rankings"], ["participants", "Participants"], ["juries", "Juries & Setup"], ["jury", "Jury Sheet Preview"]]
+    : [["jury", "My Scoring Sheet"]];
+
+  $("#tabs").innerHTML = tabs.map(([k, l]) => `<button class="tab" role="tab" aria-selected="${State.tab === k}" data-tab="${k}">${l}</button>`).join("");
+  $("#tabs").querySelectorAll("[data-tab]").forEach(btn => {
+    btn.onclick = () => {
+      State.tab = btn.dataset.tab;
+      State.open.clear();
+      paintMast();
+      render(true);
+    };
+  });
+}
+
+/** ---------- RENDER DISPATCHER ---------- */
+function render(force) {
+  if (State.tab === "jury") return renderJury(force);
+  State.juryBuilt = false;
+  if (State.tab === "results") renderResults();
+  else if (State.tab === "participants") renderParticipants();
+  else if (State.tab === "juries") renderJuries();
+}
+
+/** ---------- JURY SCORING VIEW ---------- */
+function renderJury(force) {
+  const m = $("#main");
+  if (!State.me || !State.me.slot || State.onbOpen) {
+    renderOnboarding();
+    State.juryBuilt = false;
+    return;
+  }
+  const list = sortedParts();
+  if (!list.length) {
+    m.innerHTML = `<div class="card empty"><h3>No participants added yet</h3><p>The organiser will add participants before the round begins.</p></div>`;
+    State.juryBuilt = false;
+    return;
+  }
+  if (!State.sel || !State.participants.has(State.sel)) State.sel = list[0].id;
+
+  if (!State.juryBuilt || force) {
+    m.innerHTML = `
+      ${State.me.slot === "TEST" ? `<div class="note info" style="margin-bottom:16px">You are currently using a Test Seat. Test scores are not included in the main results.</div>` : ""}
+      <div class="jury-layout">
+        <aside class="rail">
+          <div class="rail-head" id="railHead"></div>
+          <div class="rail-list" id="railList"></div>
+        </aside>
+        <section class="sheet" id="sheet"></section>
+      </div>`;
+    State.juryBuilt = true;
+    State.sheetKey = null;
+  }
+  paintRail();
+  paintSheet();
+}
+
+function renderOnboarding() {
+  const cur = State.me || {};
+  const opts = ["J1", "J2", "TEST"];
+  const pick = cur.slot || "J1";
+  $("#main").innerHTML = `
+    <div class="card onb">
+      <h2>Jury Seat Onboarding</h2>
+      <p class="muted" style="margin:0">Select your designated seat for this competition round. Your scoring sheet remains private between jury seats.</p>
+      <div class="choice">
+        ${opts.map(k => `<label><input type="radio" name="slot" value="${k}" ${pick === k ? "checked" : ""}> ${SLOTS[k]}</label>`).join("")}
+      </div>
+      <div class="field">
+        <label for="jname">Your Full Name (for remark sheets)</label>
+        <input id="jname" value="${esc(cur.name || "")}" placeholder="e.g. Ms. Tan Mei Ling">
+      </div>
+      <div class="row">
+        <button class="btn primary" id="startBtn">Save & Start Scoring</button>
+        ${State.me && State.me.slot ? `<button class="btn" id="cancelOnb">Cancel</button>` : ""}
+        <span class="hint" id="onbMsg"></span>
+      </div>
+    </div>`;
+
+  $("#startBtn").onclick = () => {
+    const slot = (document.querySelector('input[name="slot"]:checked') || {}).value;
+    const name = $("#jname").value.trim();
+    if (!slot) { $("#onbMsg").textContent = "Please select a seat."; return; }
+    State.me = { slot, name, updatedAt: Date.now() };
+    State.juries.set(State.uid, State.me);
+    State.onbOpen = false;
+    persistState();
+    paintMast();
+    render(true);
+  };
+  const c = $("#cancelOnb"); if (c) c.onclick = () => { State.onbOpen = false; render(true); };
+}
+
+function getMySheets() {
+  if (!State.sheets.has(State.uid)) {
+    State.sheets.set(State.uid, new Map());
+  }
+  return State.sheets.get(State.uid);
+}
+
+function paintRail() {
+  const head = $("#railHead"), lst = $("#railList"); if (!head || !lst) return;
+  const list = sortedParts();
+  const mySheets = getMySheets();
+  const doneCount = list.filter(p => total(mySheets.get(p.id)) != null).length;
+
+  head.innerHTML = `
+    <div class="row">
+      <strong class="num">${doneCount} of ${list.length} Scored</strong>
+      <span class="spacer"></span>
+      <button class="linkbtn" id="nextUn">Next Unscored</button>
+    </div>
+    <div class="progress-bar"><i style="width:${list.length ? Math.round(doneCount / list.length * 100) : 0}%"></i></div>`;
+
+  let html = "", cat = null;
+  for (const p of list) {
+    if (catOf(p) !== cat) {
+      cat = catOf(p);
+      const sess = SESSION_META[cat];
+      html += `<div class="gh">${esc(cat)}${sess ? `<small>${esc(sess)}</small>` : ""}</div>`;
+    }
+    const sh = mySheets.get(p.id), f = filled(sh), t = total(sh);
+    const dot = f === CRITERIA.length ? "done" : (f > 0 || (sh && sh.comments) ? "part" : "");
+    html += `
+      <button class="pitem" data-pid="${esc(p.id)}" aria-current="${p.id === State.sel}">
+        <span class="no num">${esc(p.order ?? "")}</span>
+        <span class="nm">${esc(p.name || "(No Name)")}</span>
+        <span class="st num">${t != null ? fmt(t) : ""}<span class="dot ${dot}"></span></span>
+      </button>`;
+  }
+  lst.innerHTML = html;
+  lst.querySelectorAll("[data-pid]").forEach(b => b.onclick = () => { State.sel = b.dataset.pid; paintRail(); paintSheet(); });
+  $("#nextUn").onclick = () => {
+    const l = sortedParts();
+    const idx = l.findIndex(p => p.id === State.sel);
+    const reordered = [...l.slice(idx + 1), ...l.slice(0, idx + 1)];
+    const nxt = reordered.find(p => total(mySheets.get(p.id)) == null);
+    if (nxt) { State.sel = nxt.id; paintRail(); paintSheet(); }
+  };
+}
+
+function paintSheet() {
+  const el = $("#sheet"); if (!el) return;
+  const p = State.participants.get(State.sel); if (!p) return;
+  const key = State.sel + "|" + JSON.stringify(p);
+  if (State.sheetKey === key) return;
+  const sameP = State.sheetKey && State.sheetKey.split("|")[0] === State.sel;
+  State.sheetKey = key;
+
+  const mySheets = getMySheets();
+  const sh = mySheets.get(State.sel) || {};
+  const link = safeUrl(p.scoreLink);
+  const keepFocus = sameP && document.activeElement && el.contains(document.activeElement) ? document.activeElement.id : null;
+  const sess = SESSION_META[catOf(p)];
+
+  el.innerHTML = `
+   <div class="sheet-head">
+     <div class="eyebrow">${p.order != null && p.order !== "" ? "No. " + esc(p.order) + " · " : ""}${esc(catOf(p))}${sess ? " · " + esc(sess) : ""}</div>
+     <h2>${esc(p.name || "(No Name)")}</h2>
+     <div class="facts">
+       <span>Piece: <b>${esc(p.piece || "–")}</b></span>
+       <span>Syllabus: <b>${esc(p.syllabus || "–")}</b></span>
+     </div>
+     <div style="margin-top:4px">
+       ${link ? `<a class="scorelink" href="${esc(link)}" target="_blank" rel="noopener">Open music score ↗</a>` : `<span class="muted small">No digital score link provided</span>`}
+     </div>
+   </div>
+   <div class="crit" role="group" aria-label="Scores">
+     ${CRITERIA.map(([k, l]) => `
+       <div class="crow">
+         <label for="s_${k}">${l}</label>
+         <input id="s_${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${scoreVal(sh, k) ?? ""}">
+         <span class="out">/ 20</span>
+       </div>`).join("")}
+     <div class="crow total">
+       <label>Total Computed Score</label>
+       <span class="tv" id="tv">${fmt(total(sh))}</span>
+       <span class="out">/ 100</span>
+     </div>
+   </div>
+   <div class="hint" id="shint"></div>
+   <div class="field comments">
+     <label for="cm">Adjudicator Remarks & Written Feedback</label>
+     <textarea id="cm" placeholder="Provide constructive feedback for the participant...">${esc(sh.comments || "")}</textarea>
+   </div>
+   <div class="sheet-foot">
+     <button class="btn" id="prevB">← Previous</button>
+     <button class="btn primary" id="nextB">Next Participant →</button>
+     <span class="spacer"></span>
+     <span class="save" id="saveSt">Auto-saved to session</span>
+   </div>`;
+
+  el.querySelectorAll(".crow input").forEach(inp => { inp.oninput = onScoreInput; inp.onblur = onScoreBlur; });
+  $("#cm").oninput = onEdit;
+  $("#prevB").onclick = () => stepPart(-1);
+  $("#nextB").onclick = () => stepPart(1);
+  validateAll();
+  if (keepFocus && document.getElementById(keepFocus)) document.getElementById(keepFocus).focus();
+}
+
+function stepPart(d) {
+  const l = sortedParts();
+  const i = l.findIndex(p => p.id === State.sel);
+  const n = l[i + d];
+  if (n) {
+    State.sel = n.id;
+    paintRail();
+    paintSheet();
+    $("#sheet").scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+}
+
+function parseScore(v) {
+  v = String(v).trim().replace(",", ".");
+  if (v === "") return { ok: true, val: null };
+  const n = Number(v);
+  if (!isFinite(n) || n < 0 || n > 20) return { ok: false };
+  return { ok: true, val: Math.round(n * 100) / 100 };
+}
+
+function validateAll() {
+  let bad = false;
+  document.querySelectorAll("#sheet .crow input").forEach(i => {
+    const r = parseScore(i.value);
+    i.classList.toggle("invalid", !r.ok);
+    if (!r.ok) bad = true;
+  });
+  const h = $("#shint");
+  if (h) h.textContent = bad ? "Each score category must be a valid number between 0 and 20." : "";
+}
+
+function readSheet() {
+  const scores = {};
+  document.querySelectorAll("#sheet .crow input").forEach(i => {
+    const r = parseScore(i.value);
+    scores[i.dataset.k] = r.ok ? r.val : null;
+  });
+  return { pid: State.sel, scores, comments: $("#cm").value, slot: State.me ? State.me.slot : null, updatedAt: Date.now() };
+}
+
+function onScoreInput() { validateAll(); onEdit(); }
+function onScoreBlur(e) { const r = parseScore(e.target.value); if (r.ok && r.val != null) e.target.value = r.val; }
+
+let saveTimeout = 0;
+function onEdit() {
+  const data = readSheet();
+  const pid = State.sel;
+  const mySheets = getMySheets();
+  mySheets.set(pid, data);
+  persistState();
+
+  $("#tv").textContent = fmt(total(data));
+  const st = $("#saveSt"); st.className = "save"; st.textContent = "Saving...";
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    st.textContent = "Saved";
+    paintRail();
+  }, 300);
+}
+
+/** ---------- RESULTS VIEW ---------- */
+function slotSheet(slot, pid) {
+  let best = null;
+  for (const [uid, j] of State.juries) {
+    if (j.slot !== slot) continue;
+    const sh = (State.sheets.get(uid) || new Map()).get(pid);
+    if (sh && (!best || (sh.updatedAt || 0) > (best.updatedAt || 0))) best = sh;
+  }
+  return best;
+}
+
+function computeResults() {
+  const out = new Map();
+  for (const p of sortedParts()) {
+    const a = slotSheet("J1", p.id), b = slotSheet("J2", p.id);
+    const ta = total(a), tb = total(b);
+    const avg = (ta != null && tb != null) ? (ta + tb) / 2 : null;
+    const c = catOf(p);
+    if (!out.has(c)) out.set(c, []);
+    out.get(c).push({ p, a, b, ta, tb, avg });
+  }
+  for (const rows of out.values()) {
+    const done = rows.filter(r => r.avg != null).sort((x, y) => y.avg - x.avg);
+    done.forEach((r, i) => { r.rank = (i > 0 && Math.abs(done[i - 1].avg - r.avg) < 1e-9) ? done[i - 1].rank : i + 1; });
+    done.forEach(r => { r.tied = done.filter(o => o.rank === r.rank).length > 1; });
+    const rest = rows.filter(r => r.avg == null);
+    rows.length = 0; rows.push(...done, ...rest);
+  }
+  return out;
+}
+
+function slotWarnings() {
+  const w = [];
+  for (const s of ["J1", "J2"]) {
+    const n = [...State.juries.values()].filter(j => j.slot === s).length;
+    if (n === 0) w.push(`<span class="chip warn">${SLOTS[s]} missing active adjudicator</span>`);
+    if (n > 1) w.push(`<span class="chip bad">Multiple users assigned to ${SLOTS[s]}</span>`);
+  }
+  return w.join(" ");
+}
+
+function renderResults() {
+  const res = computeResults();
+  const allCats = [...res.keys()];
+  if (State.cat !== "All" && !res.has(State.cat)) State.cat = "All";
+  const shown = State.cat === "All" ? allCats : [State.cat];
+
+  let totalN = 0, doneN = 0;
+  for (const rows of res.values()) { totalN += rows.length; doneN += rows.filter(r => r.avg != null).length; }
+
+  let html = `
+    <div class="stack">
+      <div class="row">
+        <div class="filters">
+          ${["All", ...allCats].map(c => `<button class="fbtn" data-cat="${esc(c)}" aria-pressed="${State.cat === c}">${esc(c)}</button>`).join("")}
+        </div>
+        <span class="spacer"></span>
+        <span class="muted small num">${doneN} of ${totalN} fully evaluated</span>
+        <button class="btn" id="copyRes">Copy TSV</button>
+        <button class="btn primary" id="dlCsv">Download CSV / Excel</button>
+      </div>
+      ${slotWarnings() ? `<div class="row">${slotWarnings()}</div>` : ""}
+  `;
+
+  if (!totalN) html += `<div class="card empty">No participants recorded. Switch to the Participants tab to add competitors.</div>`;
+
+  for (const c of shown) {
+    const rows = res.get(c) || [];
+    const sess = SESSION_META[c];
+    html += `
+      <section>
+        <div class="cat-h">
+          <h3>${esc(c)}</h3>
+          ${sess ? `<span class="chip gold">${esc(sess)}</span>` : ""}
+          <span class="muted small">${rows.filter(r => r.avg != null).length}/${rows.length} complete · Average of J1 & J2</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>No.</th>
+                <th>Participant</th>
+                <th>Repertoire Piece</th>
+                <th class="r">Jury 1</th>
+                <th class="r">Jury 2</th>
+                <th class="r">Average Score</th>
+                <th>Award Grade</th>
+                <th>Score Link</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+    for (const r of rows) {
+      const id = r.p.id, open = State.open.has(id), link = safeUrl(r.p.scoreLink);
+      const cell = (sh, t) => t != null ? `<span class="num">${fmt(t)}</span>` : (sh && filled(sh) ? `<span class="chip warn">${filled(sh)}/5</span>` : `<span class="muted">–</span>`);
+      html += `
+        <tr class="res" data-row="${esc(id)}" aria-expanded="${open}">
+          <td>${r.rank ? `<span class="rank ${r.rank <= 3 ? "r" + r.rank : ""}">${r.rank}</span>${r.tied ? ` <span class="chip warn">tie</span>` : ""}` : `<span class="chip">pending</span>`}</td>
+          <td class="num">${esc(r.p.order ?? "")}</td>
+          <td><strong>${esc(r.p.name || "(No Name)")}</strong></td>
+          <td>${esc(r.p.piece || "")}</td>
+          <td class="r">${cell(r.a, r.ta)}</td>
+          <td class="r">${cell(r.b, r.tb)}</td>
+          <td class="r"><span class="avg num">${fmt(r.avg)}</span></td>
+          <td>
+            <input class="tin award" list="awardList" data-award="${esc(id)}" value="${esc(r.p.award || "")}" placeholder="Assign Award" aria-label="Award for ${esc(r.p.name || "")}" style="min-width:140px">
+          </td>
+          <td>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener">Open ↗</a>` : `<span class="muted small">No link</span>`}</td>
+        </tr>`;
+
+      if (open) {
+        html += `
+          <tr class="det">
+            <td colspan="9">
+              <div class="det-grid">
+                ${detCard("Jury 1", r.a, r.ta)}
+                ${detCard("Jury 2", r.b, r.tb)}
+                ${avgDetCard(r)}
+              </div>
+            </td>
+          </tr>`;
+      }
+    }
+    html += `</tbody></table></div></section>`;
+  }
+
+  html += `
+    <datalist id="awardList">${AWARDS.map(a => `<option value="${a}">`).join("")}</datalist>
+    <p class="muted small">Rankings are automatically tabulated from the mean average of Jury 1 and Jury 2 totals. Click any row to view per-criterion averages and comments.</p>
+  </div>`;
+
+  $("#main").innerHTML = html;
+  document.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { State.cat = b.dataset.cat; render(true); });
+  document.querySelectorAll("tr.res").forEach(tr => tr.onclick = e => {
+    if (e.target.closest("input,a")) return;
+    const id = tr.dataset.row;
+    State.open.has(id) ? State.open.delete(id) : State.open.add(id);
+    render(true);
+  });
+  document.querySelectorAll("[data-award]").forEach(i => i.onchange = () => {
+    const id = i.dataset.award;
+    const p = State.participants.get(id);
+    if (p) { p.award = i.value.trim(); persistState(); }
+  });
+  $("#copyRes").onclick = () => copyText(resultsTSV(res, shown));
+  $("#dlCsv").onclick = () => downloadCSV(res, shown);
+}
+
+function downloadCSV(res, shown) {
+  const escCsv = s => '"' + String(s ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ") + '"';
+  const lines = [["Session", "Category", "Rank", "No.", "Participant", "Piece", "Syllabus", "Jury 1", "Jury 2", "Average", "Award", "Jury 1 Comments", "Jury 2 Comments"].map(escCsv).join(",")];
+  for (const c of shown) {
+    const sess = SESSION_META[c] || "";
+    for (const r of res.get(c) || []) {
+      lines.push([
+        sess, c, r.rank || "pending", r.p.order ?? "", r.p.name, r.p.piece, r.p.syllabus || "",
+        fmt(r.ta), fmt(r.tb), fmt(r.avg), r.p.award || "",
+        r.a ? r.a.comments : "", r.b ? r.b.comments : ""
+      ].map(escCsv).join(","));
+    }
+  }
+  const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Maestoso_2026_Results_and_Comments.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function detCard(title, sh, t) {
+  if (!sh) return `<div class="det-card"><h4>${title}</h4><span class="muted small">No evaluation submitted yet.</span></div>`;
+  return `
+    <div class="det-card">
+      <h4>${title}</h4>
+      <div class="mini num">
+        ${CRITERIA.map(([k, l]) => `<span>${l}</span><span>${fmt(scoreVal(sh, k))}/20</span>`).join("")}
+        <strong>Total</strong><strong>${fmt(t)}/100</strong>
+      </div>
+      <div class="cmt">${sh.comments ? esc(sh.comments) : '<span class="muted">No written feedback provided.</span>'}</div>
+    </div>`;
+}
+
+function avgDetCard(r) {
+  if (r.avg == null) {
+    return `<div class="det-card summary"><h4>Combined Jury Average</h4><span class="muted small">Waiting for both Jury 1 and Jury 2 to complete all 5 criteria to tabulate average.</span></div>`;
+  }
+  return `
+    <div class="det-card summary">
+      <h4>Combined Jury Average</h4>
+      <div class="mini num">
+        ${CRITERIA.map(([k, l]) => {
+          const v1 = scoreVal(r.a, k), v2 = scoreVal(r.b, k);
+          const cAvg = (v1 != null && v2 != null) ? (v1 + v2) / 2 : null;
+          return `<span>${l}</span><span>${fmt(cAvg)}/20</span>`;
+        }).join("")}
+        <strong>Final Average</strong><strong>${fmt(r.avg)}/100</strong>
+      </div>
+      <div class="small muted">Tabulated as (Jury 1: ${fmt(r.ta)} + Jury 2: ${fmt(r.tb)}) ÷ 2</div>
+    </div>`;
+}
+
+function resultsTSV(res, shown) {
+  const clean = s => String(s ?? "").replace(/[\t\r\n]+/g, " ");
+  const lines = [["Session", "Category", "Rank", "No.", "Participant", "Piece", "Jury 1", "Jury 2", "Average", "Award", "J1 Comments", "J2 Comments"].join("\t")];
+  for (const c of shown) {
+    const sess = SESSION_META[c] || "";
+    for (const r of res.get(c) || []) {
+      lines.push([sess, c, r.rank || "pending", r.p.order ?? "", r.p.name, r.p.piece, fmt(r.ta), fmt(r.tb), fmt(r.avg), r.p.award || "", r.a ? r.a.comments : "", r.b ? r.b.comments : ""].map(clean).join("\t"));
+    }
+  }
+  return lines.join("\n");
+}
+
+async function copyText(t) {
+  try {
+    await navigator.clipboard.writeText(t);
+    banner("Results copied to clipboard in TSV format.", "info");
+    setTimeout(() => banner(""), 3500);
+  } catch {
+    const h = $("#modalHost");
+    h.innerHTML = `
+      <div class="modal">
+        <div class="card">
+          <strong>Export TSV Data</strong>
+          <span class="muted small">Select all, copy, and paste into Excel or Google Sheets.</span>
+          <textarea readonly>${esc(t)}</textarea>
+          <div class="row"><button class="btn primary" id="mClose">Close</button></div>
+        </div>
+      </div>`;
+    h.querySelector("textarea").select();
+    $("#mClose").onclick = () => h.innerHTML = "";
+  }
+}
+
+/** ---------- PARTICIPANTS VIEW ---------- */
+function renderParticipants() {
+  const list = sortedParts();
+  const cs = cats();
+  const lastCat = State.lastCat || cs[0] || "Grade 3 (Group A)";
+
+  let html = `
+    <div class="stack">
+      <div class="card stack">
+        <h3>Add New Participant</h3>
+        <div class="grid-form">
+          <div class="field"><label for="nName">Participant Name</label><input id="nName" placeholder="Full name"></div>
+          <div class="field"><label for="nCat">Category / Grade</label><input id="nCat" list="catList" value="${esc(lastCat)}"></div>
+          <div class="field"><label for="nPiece">Repertoire Piece</label><input id="nPiece" placeholder="e.g. Sonatina Op. 36"></div>
+          <div class="field"><label for="nSyl">Syllabus</label><input id="nSyl" list="sylList" value="${esc(State.lastSyl || "ABRSM")}"></div>
+          <div class="field"><label for="nLink">Music Score Link</label><input id="nLink" placeholder="URL link"></div>
+          <div class="field"><label for="nOrd">Performance Order</label><input id="nOrd" inputmode="numeric" placeholder="Auto"></div>
+          <button class="btn primary" id="addBtn">Add Competitor</button>
+        </div>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:600">Bulk Import via Text/TSV</summary>
+          <div class="stack" style="margin-top:12px">
+            <p class="muted small" style="margin:0">Paste rows format: Name | Category | Piece | Syllabus | Score Link</p>
+            <div class="field"><textarea id="bulk" rows="5" placeholder="Chloe Tan | Grade 3 (Group A) | Flamenco | ABRSM | https://..."></textarea></div>
+            <div class="row"><button class="btn" id="bulkBtn">Process Bulk Import</button></div>
+          </div>
+        </details>
+      </div>`;
+
+  if (!list.length) html += `<div class="card empty">No participants registered yet.</div>`;
+
+  let cat = null;
+  for (const p of list) {
+    if (catOf(p) !== cat) {
+      if (cat !== null) html += `</tbody></table></div></section>`;
+      cat = catOf(p);
+      const sess = SESSION_META[cat];
+      const n = list.filter(x => catOf(x) === cat).length;
+      html += `
+        <section>
+          <div class="cat-h">
+            <h3>${esc(cat)}</h3>
+            ${sess ? `<span class="chip gold">${esc(sess)}</span>` : ""}
+            <span class="muted small">${n} entries</span>
+          </div>
+          <div class="tbl-wrap">
+            <table class="pt">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Piece</th>
+                  <th>Syllabus</th>
+                  <th>Music Score Link</th>
+                  <th>Evaluations</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>`;
+    }
+    const a = total(slotSheet("J1", p.id)) != null, b = total(slotSheet("J2", p.id)) != null;
+    html += `
+      <tr>
+        <td><input class="tin no num" data-id="${esc(p.id)}" data-f="order" value="${esc(p.order ?? "")}" inputmode="numeric"></td>
+        <td><input class="tin" data-id="${esc(p.id)}" data-f="name" value="${esc(p.name || "")}"></td>
+        <td><input class="tin" data-id="${esc(p.id)}" data-f="category" list="catList" value="${esc(p.category || "")}"></td>
+        <td><input class="tin" data-id="${esc(p.id)}" data-f="piece" value="${esc(p.piece || "")}"></td>
+        <td><input class="tin" data-id="${esc(p.id)}" data-f="syllabus" list="sylList" value="${esc(p.syllabus || "")}" style="min-width:90px"></td>
+        <td>
+          <div class="row" style="flex-wrap:nowrap;gap:6px">
+            <input class="tin url" data-id="${esc(p.id)}" data-f="scoreLink" value="${esc(p.scoreLink || "")}" placeholder="Paste URL">
+            ${safeUrl(p.scoreLink) ? `<a class="btn small" href="${esc(safeUrl(p.scoreLink))}" target="_blank" rel="noopener" style="white-space:nowrap;padding:6px 10px">Open ↗</a>` : ""}
+          </div>
+        </td>
+        <td><span class="chip ${a ? "good" : ""}">J1 ${a ? "✓" : "–"}</span> <span class="chip ${b ? "good" : ""}">J2 ${b ? "✓" : "–"}</span></td>
+        <td><button class="btn danger" data-del="${esc(p.id)}">Delete</button></td>
+      </tr>`;
+  }
+  if (cat !== null) html += `</tbody></table></div></section>`;
+
+  html += `
+    <datalist id="catList">${[...new Set([...SCHEDULE_ORDER, ...cs])].map(c => `<option value="${esc(c)}">`).join("")}</datalist>
+    <datalist id="sylList"><option value="ABRSM"><option value="Trinity"><option value="LCM"><option value="Own Choice"></datalist>
+  </div>`;
+
+  $("#main").innerHTML = html;
+
+  $("#addBtn").onclick = () => {
+    const name = $("#nName").value.trim();
+    if (!name) { $("#nName").focus(); return; }
+    const category = $("#nCat").value.trim() || "Uncategorised";
+    const ord = $("#nOrd").value.trim();
+    State.lastCat = category;
+    State.lastSyl = $("#nSyl").value.trim();
+    const id = "p_" + Date.now();
+    const data = {
+      id, name, category, piece: $("#nPiece").value.trim(),
+      syllabus: State.lastSyl, scoreLink: $("#nLink").value.trim(),
+      order: ord ? Number(ord) || ord : 1, award: ""
+    };
+    State.participants.set(id, data);
+    persistState();
+    render(true);
+  };
+
+  $("#bulkBtn").onclick = () => {
+    const lines = $("#bulk").value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    let count = 0;
+    for (const l of lines) {
+      const f = (l.includes("\t") ? l.split("\t") : l.split("|")).map(x => x.trim());
+      if (!f[0]) continue;
+      const id = "p_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
+      const category = f[1] || "Uncategorised";
+      State.participants.set(id, { id, name: f[0], category, piece: f[2] || "", syllabus: f[3] || "", scoreLink: f[4] || "", order: count + 1, award: "" });
+      count++;
+    }
+    persistState();
+    render(true);
+  };
+
+  document.querySelectorAll(".pt .tin").forEach(i => {
+    i.onchange = () => {
+      let v = i.value.trim();
+      if (i.dataset.f === "order" && v !== "" && isFinite(Number(v))) v = Number(v);
+      const p = State.participants.get(i.dataset.id);
+      if (p) { p[i.dataset.f] = v; persistState(); }
+      if (i.dataset.f === "scoreLink") render(true);
+    };
+  });
+
+  document.querySelectorAll("[data-del]").forEach(b => {
+    b.onclick = () => {
+      if (!b.classList.contains("armed")) {
+        b.classList.add("armed"); b.textContent = "Confirm Delete";
+        setTimeout(() => { b.classList.remove("armed"); b.textContent = "Delete"; }, 3000);
+        return;
+      }
+      State.participants.delete(b.dataset.del);
+      persistState();
+      render(true);
+    };
+  });
+}
+
+/** ---------- JURIES & SETUP VIEW ---------- */
+function renderJuries() {
+  const e = State.event;
+  const list = sortedParts();
+  const rows = [...State.juries.entries()].sort((a, b) => ncmp(a[1].slot || "Z", b[1].slot || "Z"));
+
+  let html = `
+    <div class="stack">
+      <div class="card stack">
+        <h3>Competition Configuration</h3>
+        <div class="grid-form">
+          <div class="field"><label for="eT">Event Title</label><input id="eT" value="${esc(e.title || "")}"></div>
+          <div class="field"><label for="eR">Round / Phase</label><input id="eR" value="${esc(e.round || "")}"></div>
+          <div class="field"><label for="eD">Event Date</label><input id="eD" value="${esc(e.date || "")}"></div>
+          <div class="field"><label for="eV">Venue</label><input id="eV" value="${esc(e.venue || "")}"></div>
+          <button class="btn primary" id="saveEv">Update Event Info</button>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h3>Adjudicator Seats Management</h3>
+        <p class="muted small" style="margin:0">Manage adjudicator seats. In live deployments, each jury logs in independently to access their assigned seat.</p>
+        ${slotWarnings() ? `<div class="row">${slotWarnings()}</div>` : ""}
+        ${rows.length ? `
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Adjudicator Name</th>
+                  <th>Assigned Seat</th>
+                  <th class="r">Completed Evaluations</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map(([uid, j]) => {
+                  const sh = State.sheets.get(uid) || new Map();
+                  const done = list.filter(p => total(sh.get(p.id)) != null).length;
+                  return `
+                    <tr>
+                      <td><strong>${esc(j.name || "Adjudicator")}</strong> ${uid === State.uid ? '<span class="chip">Active Session</span>' : ""}</td>
+                      <td>
+                        <select class="tin" data-seat="${esc(uid)}" style="width:auto">
+                          ${["J1", "J2", "TEST"].map(k => `<option value="${k}" ${j.slot === k ? "selected" : ""}>${SLOTS[k]}</option>`).join("")}
+                        </select>
+                      </td>
+                      <td class="r num">${done} / ${list.length}</td>
+                      <td><button class="btn" data-view="${esc(uid)}">${State.viewJury === uid ? "Hide Sheet" : "Inspect Sheet"}</button></td>
+                    </tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>` : `<div class="empty">No adjudicators registered.</div>`}
+      </div>`;
+
+  if (State.viewJury && State.juries.has(State.viewJury)) {
+    const j = State.juries.get(State.viewJury), sh = State.sheets.get(State.viewJury) || new Map();
+    html += `
+      <div class="card stack">
+        <h3>Submissions Inspection: ${esc(j.name || "Jury")} (${esc(SLOTS[j.slot])})</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Participant</th>
+                <th>Category</th>
+                ${CRITERIA.map(([, l]) => `<th class="r">${l}</th>`).join("")}
+                <th class="r">Total</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${list.map(p => {
+                const s = sh.get(p.id);
+                return `
+                  <tr>
+                    <td class="num">${esc(p.order ?? "")}</td>
+                    <td>${esc(p.name)}</td>
+                    <td>${esc(catOf(p))}</td>
+                    ${CRITERIA.map(([k]) => `<td class="r num">${fmt(scoreVal(s, k))}</td>`).join("")}
+                    <td class="r num"><strong>${fmt(total(s))}</strong></td>
+                    <td style="min-width:200px;white-space:pre-wrap">${esc(s && s.comments || "")}</td>
+                  </tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  html += `</div>`;
+  $("#main").innerHTML = html;
+
+  $("#saveEv").onclick = () => {
+    State.event = { title: $("#eT").value.trim(), round: $("#eR").value.trim(), date: $("#eD").value.trim(), venue: $("#eV").value.trim() };
+    persistState();
+    paintMast();
+    banner("Event configuration updated successfully.", "info");
+    setTimeout(() => banner(""), 2500);
+  };
+
+  document.querySelectorAll("[data-seat]").forEach(s => {
+    s.onchange = () => {
+      const uid = s.dataset.seat;
+      const j = State.juries.get(uid);
+      if (j) { j.slot = s.value; persistState(); }
+      render();
+    };
+  });
+
+  document.querySelectorAll("[data-view]").forEach(b => {
+    b.onclick = () => {
+      State.viewJury = State.viewJury === b.dataset.view ? null : b.dataset.view;
+      render(true);
+    };
+  });
+}
+
+// Start application when document is ready
+document.addEventListener("DOMContentLoaded", initApp);
+</script>
+</body>
+</html>

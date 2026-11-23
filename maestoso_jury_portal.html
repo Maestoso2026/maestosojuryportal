@@ -210,6 +210,25 @@ tr.res{cursor:pointer;transition:background 0.15s ease}
 
 <div id="modalHost"></div>
 
+<script>
+  window.__renderFallback = function (msg) {
+    var chip = document.getElementById("roleControls");
+    var main = document.getElementById("main");
+    if (chip) chip.innerHTML = '<span class="chip warn">Fallback Mode</span> <span class="chip gold">Organiser Mode</span>';
+    if (main) {
+      main.innerHTML = '<div class="card empty"><h3>Portal loaded in fallback mode</h3><p class="small muted">' +
+        (msg || "Firebase module did not finish loading.") +
+        '</p><button class="btn primary" onclick="location.reload()">Reload Page</button></div>';
+    }
+  };
+  setTimeout(function () {
+    var main = document.getElementById("main");
+    if (main && main.textContent.indexOf("Loading the jury portal application") !== -1) {
+      window.__renderFallback("Took too long loading external scripts.");
+    }
+  }, 4000);
+  
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";

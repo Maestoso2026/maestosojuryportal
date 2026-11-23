@@ -210,9 +210,12 @@ tr.res{cursor:pointer;transition:background 0.15s ease}
 
 <div id="modalHost"></div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
 /**
- * Maestoso Jury Portal - Core Application State & Logic
+ * Maestoso Jury Portal - Core Application State, Session Panel & Firebase Live Sync
  */
 const CRITERIA = [
   ["accuracy", "Accuracy & Fidelity"],
@@ -229,8 +232,8 @@ const SLOTS = {
 };
 
 const AWARDS = [
-  "Champion", "1st Runner-Up", "2nd Runner-Up", 
-  "Gold Award", "Silver Award", "Bronze Award", 
+  "Champion", "1st Runner-Up", "2nd Runner-Up",
+  "Gold Award", "Silver Award", "Bronze Award",
   "Merit", "Honourable Mention"
 ];
 
@@ -268,14 +271,45 @@ const SESSION_META = {
   "Grade 5": "Session 3 · 4:30pm – 7:00pm"
 };
 
+// Session-specific 2-judge panel mapping
+const SESSION_PANELS = {
+  1: { j1Uid: "u_valentino", j2Uid: "u_ujin", label: "Valentino Loh & U-Jin Lim" },
+  2: { j1Uid: "u_jason", j2Uid: "u_valentino", label: "Dr. Jason Tye & Valentino Loh" },
+  3: { j1Uid: "u_jason", j2Uid: "u_valentino", label: "Dr. Jason Tye & Valentino Loh" }
+};
+
+function sessionNumOfCategory(cat) {
+  const s = SESSION_META[cat] || "";
+  if (s.startsWith("Session 1")) return 1;
+  if (s.startsWith("Session 2")) return 2;
+  if (s.startsWith("Session 3")) return 3;
+  return 1;
+}
+
+function panelForCategory(cat) {
+  const sNum = sessionNumOfCategory(cat);
+  return SESSION_PANELS[sNum] || SESSION_PANELS[1];
+}
+
 function catRank(c) {
   const idx = SCHEDULE_ORDER.indexOf(c);
   return idx === -1 ? 999 : idx;
 }
 
 const STORAGE_KEY = "maestoso_jury_portal_v4_2026";
+const FIRESTORE_DOC_PATH = ["competitions", "maestoso_2026_finals"];
 
-// Pre-populated 133 Participants in Exact Revised Schedule Order
+const firebaseConfig = {
+  apiKey: "AIzaSyCWx990Zd2_xgoFGbR2wZFmA8HFpMsCc0E",
+  authDomain: "maestoso2026.firebaseapp.com",
+  projectId: "maestoso2026",
+  storageBucket: "maestoso2026.firebasestorage.app",
+  messagingSenderId: "614768933731",
+  appId: "1:614768933731:web:4ef4be10499119caf8f156",
+  measurementId: "G-QSTD8CREQ7"
+};
+
+// Pre-populated 138 Participants in Exact Revised Schedule Order
 const RAW_SCHEDULE = [
   // Session 1: 9.30am - 1pm - 3A, 6, 7, 8
   [1, "Grade 3 (Group A)", "Tan Jey You", "Anastasia by Ailbhe Mcdonagh", "ABRSM 2021-2022", "https://drive.google.com/open?id=1MtblFim8hGdBtb7FBwP0PJWP1M0hVBL5"],
@@ -354,14 +388,15 @@ const RAW_SCHEDULE = [
   [2, "Grade 2 (Group A)", "Emily Cheah Hui Ying", "Angelfish by Anne Crosby Gaudet", "ABRSM 2021-2022", "https://drive.google.com/file/d/1TafzXIc1tEYkmuafrqyqeoe8F1jRnBww/view?usp=drive_link"],
   [3, "Grade 2 (Group A)", "Teh Shin Yaa", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=1W3zNyKuWpRiIA224GVpfeq0V2roKiOnm"],
   [4, "Grade 2 (Group A)", "Cheong Kai Siang", "Sneaky Surprise by Sebastian Ooi Wei Chern", "ABRSM 2027", "https://drive.google.com/file/d/1xg-GwgIvtsouwjey9iG79v68JAHUBjFJ/view?usp=drivesdk"],
-  [5, "Grade 2 (Group A)", "Evelyn Leow Xuan Yi", "Circling Gulls by Joan Last", "ABRSM 2027", "https://drive.google.com/file/d/1054vOHN4zp_kwj7OE4nz2_I5Yipj01Nv/view?usp=drive_link"],
-  [6, "Grade 2 (Group A)", "Tan Yi Wen", "Cloudy Day by Christopher Norton", "ABRSM", "https://drive.google.com/file/d/12QRQOqMCFiB70JNz46FkqmF41NFquC5g/view?usp=drive_link"],
+  [5, "Grade 2 (Group A)", "Tan Yi Wen", "Cloudy Day by Christopher Norton", "ABRSM", "https://drive.google.com/file/d/12QRQOqMCFiB70JNz46FkqmF41NFquC5g/view?usp=drive_link"],
+  [6, "Grade 2 (Group A)", "Evelyn Leow Xuan Yi", "Circling Gulls by Joan Last", "ABRSM 2027", "https://drive.google.com/file/d/1054vOHN4zp_kwj7OE4nz2_I5Yipj01Nv/view?usp=drive_link"],
   [7, "Grade 2 (Group A)", "Say Ker Qi", "Moderato by Ludwig Van Beethoven", "ABRSM 2025-2026", "https://drive.google.com/open?id=1XJ2fPf01wy243vfYm8T63TVn00Iv7gGt"],
   [8, "Grade 2 (Group A)", "Aariz Aryan Bin Aimi Fakhri", "Ja-Da by Bob Carleton", "ABRSM 2019-2020", "https://drive.google.com/open?id=1Mwrh--llG5QL1SOe5I5b5E0FZr43AcTQ"],
   [9, "Grade 2 (Group A)", "Haarsheeta Prebesh", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=1s0Btdyvb-0-Ag5Dkm9fqQ-lpT7IK2oqQ"],
   [10, "Grade 2 (Group A)", "Soo Yeuk Hei", "Allegro in C by Johann Hässler", "Trinity", "https://drive.google.com/open?id=1QN7cCkNij0fjAPiJc5G9V5Ja6bodJKhT"],
   [11, "Grade 2 (Group A)", "Divveshram S/O Balashanmugam", "Sparkling Splashes & Smooth Water by Barbara Arens", "ABRSM 2025-2026", "https://drive.google.com/open?id=1ZRng-j-oAho-DLzRt2GSP-jib16XdmPH"],
   [12, "Grade 2 (Group A)", "Emilia Cheah Qiao Ru", "Angelfish by Anne Crosby Gaudet", "ABRSM 2021", "https://drive.google.com/file/d/1TafzXIc1tEYkmuafrqyqeoe8F1jRnBww/view?usp=drive_link"],
+  [13, "Grade 2 (Group B)", "Gun Xin En", "Sneaky Surprise by Sebastian Ooi Wei Chern", "ABRSM 2027", "https://drive.google.com/file/d/1xg-GwgIvtsouwjey9iG79v68JAHUBjFJ/view?usp=drivesdk"],
   [14, "Grade 2 (Group A)", "Son Yu Ra", "Park Daze by Nikki Yeoh", "ABRSM 2027", "https://drive.google.com/file/d/15li99zTgOuUU3MdnLYNvW-hsJiSr3xpJ/view?usp=drivesdk"],
   [15, "Grade 2 (Group A)", "Lee Le Xuan", "Spooky Wood Hollow by Heather Hammond", "ABRSM", "https://drive.google.com/file/d/1i-E4IAULFGv75vyveBuc4ckXp6Wz4Hrh/view?usp=drive_link"],
 
@@ -406,7 +441,6 @@ const RAW_SCHEDULE = [
   [11, "Grade 2 (Group B)", "Katelyn Isabelle Marudo", "Sipkova Ruzenka (Sleeping Beauty) by Ivana Loudova", "", "https://drive.google.com/file/d/1N18nuLyggvBCohQwP_4SS9jQZT2u3ZGj/view?usp=drivesdk"],
   [12, "Grade 2 (Group B)", "Aiden Ang Min Bo", "Sparkling Splashes & Smooth Water by Barbara Arens", "ABRSM", "https://drive.google.com/file/d/1cpteZTREw3i-dtu54fYUDvG8Uhmg9R7n/view?usp=sharing"],
   [13, "Grade 2 (Group B)", "Teoh Kai Yang", "Spooky Wood Hollow by Heather Hammond", "ABRSM 2025-2026", "https://drive.google.com/open?id=1kyqEhA7yZZ18kk4M0Pmg5HPfeJQ4FHGj"],
-  [13, "Grade 2 (Group B)", "Gun Xin En", "Sneaky Surprise by Sebastian Ooi Wei Chern", "ABRSM 2027", "https://drive.google.com/file/d/1xg-GwgIvtsouwjey9iG79v68JAHUBjFJ/view?usp=drivesdk"],
 
   [1, "Grade 4", "Jaden Chan Zheng Hang", "Clockwork Doll by Dmitry Shostakovich", "ABRSM", "https://drive.google.com/file/d/1D61yNs_SdUHt-J6760YfbO2SpmBsd0IT/view?usp=drive_link"],
   [2, "Grade 4", "Khoh Zi Yuan", "Wallace and Gromit Theme by Julian Nott", "ABRSM 2025-2026", "https://drive.google.com/file/d/1siMCutBUf8VfQDNFQeA4HzaR508WU3dV/view?usp=sharing"],
@@ -443,9 +477,32 @@ const INITIAL_PARTICIPANTS = RAW_SCHEDULE.map(([order, category, name, piece, sy
 }));
 
 const INITIAL_JURIES = {
-  "u_j1": { name: "Jury 1", slot: "J1", updatedAt: Date.now() },
-  "u_j2": { name: "Jury 2", slot: "J2", updatedAt: Date.now() }
+  "u_valentino": { name: "Valentino Loh", slot: "J1", sessions: [1, 2, 3], updatedAt: Date.now() },
+  "u_ujin": { name: "U-Jin Lim", slot: "J2", sessions: [1], updatedAt: Date.now() },
+  "u_jason": { name: "Dr. Jason Tye", slot: "J1", sessions: [2, 3], updatedAt: Date.now() }
 };
+
+function parseLinkConfig() {
+  const params = new URLSearchParams(window.location.search);
+  const juryParam = (params.get("jury") || "").trim().toLowerCase();
+  const roleParam = (params.get("role") || "").trim().toLowerCase();
+
+  if (juryParam === "valentino") {
+    return { mode: "jury", lockedJury: true, uid: "u_valentino", sessions: [1, 2, 3], label: "Valentino Loh · Sessions 1–3" };
+  }
+  if (juryParam === "ujin" || juryParam === "u-jin") {
+    return { mode: "jury", lockedJury: true, uid: "u_ujin", sessions: [1], label: "U-Jin Lim · Session 1" };
+  }
+  if (juryParam === "jason" || juryParam === "drjason") {
+    return { mode: "jury", lockedJury: true, uid: "u_jason", sessions: [2, 3], label: "Dr. Jason Tye · Sessions 2–3" };
+  }
+  if (roleParam === "jury") {
+    return { mode: "jury", lockedJury: false, uid: "u_valentino", sessions: [1, 2, 3], label: "Jury Portal" };
+  }
+  return { mode: "organiser", lockedJury: false, uid: "u_valentino", sessions: [1, 2, 3], label: "Organiser Mode" };
+}
+
+const linkCfg = parseLinkConfig();
 
 function loadPersistedState() {
   try {
@@ -457,51 +514,111 @@ function loadPersistedState() {
   }
 }
 
-function persistState() {
-  try {
-    const payload = {
-      event: State.event,
-      participants: [...State.participants.entries()],
-      juries: [...State.juries.entries()],
-      sheets: [...State.sheets.entries()].map(([uid, m]) => [uid, [...m.entries()]]),
-      me: State.me
+function defaultJuriesMap() {
+  return new Map(Object.entries(INITIAL_JURIES).map(([k, v]) => [k, { ...v, sessions: [...v.sessions] }]));
+}
+
+function defaultSheetsMap() {
+  return new Map([
+    ["u_valentino", new Map()],
+    ["u_ujin", new Map()],
+    ["u_jason", new Map()]
+  ]);
+}
+
+function hydrateFromObject(obj, prevUid) {
+  if (!obj) return;
+  if (obj.event) {
+    State.event = {
+      title: obj.event.title ?? "Maestoso Piano Competition 2026",
+      round: obj.event.round ?? "Finals Sessioning for Gold Medalists",
+      date: obj.event.date ?? "29 November 2026",
+      venue: obj.event.venue ?? "TAR UMT @ Tanjung Bungah, Penang"
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }
+  if (Array.isArray(obj.participants) && obj.participants.length) {
+    State.participants = new Map(obj.participants);
+  }
+  if (Array.isArray(obj.juries) && obj.juries.length) {
+    State.juries = new Map(obj.juries);
+  }
+  if (Array.isArray(obj.sheets)) {
+    const nextSheets = defaultSheetsMap();
+    for (const [uid, entries] of obj.sheets) {
+      nextSheets.set(uid, new Map(Array.isArray(entries) ? entries : []));
+    }
+    State.sheets = nextSheets;
+  }
+  const activeUid = linkCfg.lockedJury ? linkCfg.uid : (prevUid || State.uid);
+  State.me = State.juries.get(activeUid) || INITIAL_JURIES[activeUid] || INITIAL_JURIES.u_valentino;
+}
+
+function serializeState() {
+  return {
+    event: State.event,
+    participants: [...State.participants.entries()],
+    juries: [...State.juries.entries()],
+    sheets: [...State.sheets.entries()].map(([uid, m]) => [uid, [...m.entries()]]),
+    updatedAt: Date.now()
+  };
+}
+
+let db = null;
+let docRef = null;
+let cloudReady = false;
+let suppressCloudEcho = false;
+
+function persistState(skipCloud) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
   } catch {}
+
+  if (!skipCloud && docRef && !suppressCloudEcho) {
+    setDoc(docRef, serializeState(), { merge: true })
+      .then(() => {
+        State.syncStatus = "live";
+        paintSyncBadge();
+      })
+      .catch(() => {
+        State.syncStatus = "local";
+        paintSyncBadge();
+      });
+  }
 }
 
 const savedData = loadPersistedState();
 
 const State = {
-  role: "organiser", // "organiser" | "jury"
-  uid: "u_j1",
-  event: savedData?.event || {
+  role: linkCfg.mode, // "organiser" | "jury"
+  lockedJury: linkCfg.lockedJury,
+  allowedSessions: linkCfg.sessions,
+  uid: linkCfg.uid,
+  event: {
     title: "Maestoso Piano Competition 2026",
     round: "Finals Sessioning for Gold Medalists",
     date: "29 November 2026",
     venue: "TAR UMT @ Tanjung Bungah, Penang"
   },
-  participants: savedData?.participants
-    ? new Map(savedData.participants)
-    : new Map(INITIAL_PARTICIPANTS.map(p => [p.id, p])),
-  juries: savedData?.juries
-    ? new Map(savedData.juries)
-    : new Map(Object.entries(INITIAL_JURIES)),
-  sheets: savedData?.sheets
-    ? new Map(savedData.sheets.map(([uid, entries]) => [uid, new Map(entries)]))
-    : new Map([["u_j1", new Map()], ["u_j2", new Map()]]),
-  me: savedData?.me || INITIAL_JURIES["u_j1"],
+  participants: new Map(INITIAL_PARTICIPANTS.map(p => [p.id, { ...p }])),
+  juries: defaultJuriesMap(),
+  sheets: defaultSheetsMap(),
+  me: { ...INITIAL_JURIES[linkCfg.uid] },
   editing: new Map(),
-  tab: "results",
+  tab: linkCfg.mode === "jury" ? "jury" : "results",
   sel: "p_1",
   cat: "All",
   open: new Set(),
   viewJury: null,
-  onbOpen: false
+  onbOpen: false,
+  syncStatus: "connecting"
 };
 
+if (savedData) {
+  hydrateFromObject(savedData, State.uid);
+}
+
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "'" }[c]));
 const ncmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
 const fmt = n => n == null ? "–" : String(Math.round(n * 100) / 100);
 
@@ -528,8 +645,15 @@ function compareCategories(a, b) {
 function sortedParts() {
   return [...State.participants.entries()]
     .map(([id, d]) => ({ ...d, id }))
+    .filter(p => {
+      if (State.role === "jury" && Array.isArray(State.allowedSessions)) {
+        return State.allowedSessions.includes(sessionNumOfCategory(catOf(p)));
+      }
+      return true;
+    })
     .sort((a, b) => compareCategories(catOf(a), catOf(b)) || ((Number(a.order) || 9999) - (Number(b.order) || 9999)) || ncmp(a.name || "", b.name || ""));
 }
+
 function cats() { return [...new Set(sortedParts().map(catOf))]; }
 function scoreVal(sh, k) { const v = sh && sh.scores ? sh.scores[k] : null; return typeof v === "number" && isFinite(v) ? v : null; }
 function filled(sh) { return CRITERIA.filter(([k]) => scoreVal(sh, k) != null).length; }
@@ -542,10 +666,64 @@ function banner(msg, kind) {
   $("#banner").innerHTML = msg ? `<div class="note ${kind || ""}">${esc(msg)}</div>` : "";
 }
 
+function paintSyncBadge() {
+  const el = $("#syncChip");
+  if (!el) return;
+  if (State.syncStatus === "live") {
+    el.className = "chip good";
+    el.textContent = "Live Sync: Connected";
+  } else if (State.syncStatus === "local") {
+    el.className = "chip warn";
+    el.textContent = "Local Cache Only";
+  } else {
+    el.className = "chip";
+    el.textContent = "Connecting Sync...";
+  }
+}
+
+function initFirebase() {
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    docRef = doc(db, FIRESTORE_DOC_PATH[0], FIRESTORE_DOC_PATH[1]);
+
+    onSnapshot(docRef, (snap) => {
+      if (snap.exists()) {
+        const cloudData = snap.data();
+        const localRaw = localStorage.getItem(STORAGE_KEY);
+        const localObj = localRaw ? JSON.parse(localRaw) : null;
+        if (!localObj || (cloudData.updatedAt || 0) >= (localObj.updatedAt || 0)) {
+          suppressCloudEcho = true;
+          hydrateFromObject(cloudData, State.uid);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
+          } catch {}
+          suppressCloudEcho = false;
+          State.sheetKey = null;
+          paintMast();
+          render(true);
+        }
+      } else if (!cloudReady) {
+        setDoc(docRef, serializeState(), { merge: true }).catch(() => {});
+      }
+      cloudReady = true;
+      State.syncStatus = "live";
+      paintSyncBadge();
+    }, () => {
+      State.syncStatus = "local";
+      paintSyncBadge();
+    });
+  } catch {
+    State.syncStatus = "local";
+    paintSyncBadge();
+  }
+}
+
 /** ---------- INITIALIZATION ---------- */
 function initApp() {
   paintMast();
   render(true);
+  initFirebase();
 }
 
 /** ---------- MASTHEAD & NAV ---------- */
@@ -555,19 +733,32 @@ function paintMast() {
   $("#evMeta").textContent = [e.round, e.date, e.venue].filter(Boolean).join(" · ");
   document.title = (e.title || "Maestoso") + " · Jury Portal";
 
-  let roleHtml = "";
+  const activeJudge = State.juries.get(State.uid) || State.me || {};
+  let roleHtml = `<span class="chip" id="syncChip">${State.syncStatus === "live" ? "Live Sync: Connected" : State.syncStatus === "local" ? "Local Cache Only" : "Connecting Sync..."}</span>`;
+
   if (State.role === "organiser") {
     roleHtml += `<span class="chip gold">Organiser Mode</span> `;
-    roleHtml += `<button class="btn small" id="switchRole">Switch to Jury View</button>`;
+    if (!State.lockedJury) {
+      roleHtml += `<button class="btn small" id="switchRole">Switch to Jury View</button>`;
+    }
   } else {
-    roleHtml += `<span class="chip">${SLOTS[State.me.slot] || State.me.slot}${State.me.name ? " · " + esc(State.me.name) : ""}</span> `;
-    roleHtml += `<button class="linkbtn" id="chgSlot">Change Seat</button> `;
-    roleHtml += `<button class="btn small" id="switchRole">Switch to Organiser View</button>`;
+    const sessText = Array.isArray(State.allowedSessions) && State.allowedSessions.length < 3
+      ? ` · Session${State.allowedSessions.length > 1 ? "s" : ""} ${State.allowedSessions.join(" & ")}`
+      : " · Sessions 1–3";
+    roleHtml += `<span class="chip gold">${esc(activeJudge.name || "Adjudicator")}${sessText}</span> `;
+    if (!State.lockedJury) {
+      roleHtml += `<button class="linkbtn" id="chgSlot">Change Seat</button> `;
+      roleHtml += `<button class="btn small" id="switchRole">Switch to Organiser View</button>`;
+    }
   }
   $("#roleControls").innerHTML = roleHtml;
+  paintSyncBadge();
 
-  const b = $("#chgSlot"); if (b) b.onclick = () => { State.onbOpen = true; State.tab = "jury"; render(true); };
-  const s = $("#switchRole"); if (s) s.onclick = () => {
+  const b = $("#chgSlot");
+  if (b) b.onclick = () => { State.onbOpen = true; State.tab = "jury"; render(true); };
+
+  const s = $("#switchRole");
+  if (s) s.onclick = () => {
     State.role = State.role === "organiser" ? "jury" : "organiser";
     State.tab = State.role === "organiser" ? "results" : "jury";
     paintMast();
@@ -601,22 +792,23 @@ function render(force) {
 /** ---------- JURY SCORING VIEW ---------- */
 function renderJury(force) {
   const m = $("#main");
-  if (!State.me || !State.me.slot || State.onbOpen) {
+  if (!State.lockedJury && ((!State.me || !State.me.slot) || State.onbOpen)) {
     renderOnboarding();
     State.juryBuilt = false;
     return;
   }
   const list = sortedParts();
   if (!list.length) {
-    m.innerHTML = `<div class="card empty"><h3>No participants added yet</h3><p>The organiser will add participants before the round begins.</p></div>`;
+    m.innerHTML = `<div class="card empty"><h3>No participants in this session yet</h3><p>Check your assigned session or contact the organiser.</p></div>`;
     State.juryBuilt = false;
     return;
   }
-  if (!State.sel || !State.participants.has(State.sel)) State.sel = list[0].id;
+  if (!State.sel || !list.some(p => p.id === State.sel)) State.sel = list[0].id;
 
   if (!State.juryBuilt || force) {
+    const activeJudge = State.juries.get(State.uid) || State.me || {};
     m.innerHTML = `
-      ${State.me.slot === "TEST" ? `<div class="note info" style="margin-bottom:16px">You are currently using a Test Seat. Test scores are not included in the main results.</div>` : ""}
+      ${activeJudge.slot === "TEST" ? `<div class="note info" style="margin-bottom:16px">You are currently using a Test Seat. Test scores are not included in the main results.</div>` : ""}
       <div class="jury-layout">
         <aside class="rail">
           <div class="rail-head" id="railHead"></div>
@@ -644,7 +836,7 @@ function renderOnboarding() {
       </div>
       <div class="field">
         <label for="jname">Your Full Name (for remark sheets)</label>
-        <input id="jname" value="${esc(cur.name || "")}" placeholder="e.g. Ms. Tan Mei Ling">
+        <input id="jname" value="${esc(cur.name || "")}" placeholder="e.g. Valentino Loh">
       </div>
       <div class="row">
         <button class="btn primary" id="startBtn">Save & Start Scoring</button>
@@ -657,7 +849,7 @@ function renderOnboarding() {
     const slot = (document.querySelector('input[name="slot"]:checked') || {}).value;
     const name = $("#jname").value.trim();
     if (!slot) { $("#onbMsg").textContent = "Please select a seat."; return; }
-    State.me = { slot, name, updatedAt: Date.now() };
+    State.me = { ...(State.juries.get(State.uid) || {}), slot, name, updatedAt: Date.now() };
     State.juries.set(State.uid, State.me);
     State.onbOpen = false;
     persistState();
@@ -693,7 +885,8 @@ function paintRail() {
     if (catOf(p) !== cat) {
       cat = catOf(p);
       const sess = SESSION_META[cat];
-      html += `<div class="gh">${esc(cat)}${sess ? `<small>${esc(sess)}</small>` : ""}</div>`;
+      const panel = panelForCategory(cat);
+      html += `<div class="gh">${esc(cat)}${sess ? `<small>${esc(sess)} · ${esc(panel.label)}</small>` : ""}</div>`;
     }
     const sh = mySheets.get(p.id), f = filled(sh), t = total(sh);
     const dot = f === CRITERIA.length ? "done" : (f > 0 || (sh && sh.comments) ? "part" : "");
@@ -718,7 +911,7 @@ function paintRail() {
 function paintSheet() {
   const el = $("#sheet"); if (!el) return;
   const p = State.participants.get(State.sel); if (!p) return;
-  const key = State.sel + "|" + JSON.stringify(p);
+  const key = State.sel + "|" + State.uid + "|" + JSON.stringify(p);
   if (State.sheetKey === key) return;
   const sameP = State.sheetKey && State.sheetKey.split("|")[0] === State.sel;
   State.sheetKey = key;
@@ -728,6 +921,7 @@ function paintSheet() {
   const link = safeUrl(p.scoreLink);
   const keepFocus = sameP && document.activeElement && el.contains(document.activeElement) ? document.activeElement.id : null;
   const sess = SESSION_META[catOf(p)];
+  const activeJudge = State.juries.get(State.uid) || State.me || {};
 
   el.innerHTML = `
    <div class="sheet-head">
@@ -736,6 +930,7 @@ function paintSheet() {
      <div class="facts">
        <span>Piece: <b>${esc(p.piece || "–")}</b></span>
        <span>Syllabus: <b>${esc(p.syllabus || "–")}</b></span>
+       <span>Adjudicator: <b>${esc(activeJudge.name || "–")}</b></span>
      </div>
      <div style="margin-top:4px">
        ${link ? `<a class="scorelink" href="${esc(link)}" target="_blank" rel="noopener">Open music score ↗</a>` : `<span class="muted small">No digital score link provided</span>`}
@@ -763,7 +958,7 @@ function paintSheet() {
      <button class="btn" id="prevB">← Previous</button>
      <button class="btn primary" id="nextB">Next Participant →</button>
      <span class="spacer"></span>
-     <span class="save" id="saveSt">Auto-saved to session</span>
+     <span class="save" id="saveSt">Auto-saved & synced</span>
    </div>`;
 
   el.querySelectorAll(".crow input").forEach(inp => { inp.oninput = onScoreInput; inp.onblur = onScoreBlur; });
@@ -811,7 +1006,16 @@ function readSheet() {
     const r = parseScore(i.value);
     scores[i.dataset.k] = r.ok ? r.val : null;
   });
-  return { pid: State.sel, scores, comments: $("#cm").value, slot: State.me ? State.me.slot : null, updatedAt: Date.now() };
+  const activeJudge = State.juries.get(State.uid) || State.me || {};
+  return {
+    pid: State.sel,
+    judgeUid: State.uid,
+    judgeName: activeJudge.name || "",
+    scores,
+    comments: $("#cm").value,
+    slot: activeJudge.slot || null,
+    updatedAt: Date.now()
+  };
 }
 
 function onScoreInput() { validateAll(); onEdit(); }
@@ -829,31 +1033,32 @@ function onEdit() {
   const st = $("#saveSt"); st.className = "save"; st.textContent = "Saving...";
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
-    st.textContent = "Saved";
+    st.textContent = "Saved & synced";
     paintRail();
   }, 300);
 }
 
 /** ---------- RESULTS VIEW ---------- */
-function slotSheet(slot, pid) {
-  let best = null;
-  for (const [uid, j] of State.juries) {
-    if (j.slot !== slot) continue;
-    const sh = (State.sheets.get(uid) || new Map()).get(pid);
-    if (sh && (!best || (sh.updatedAt || 0) > (best.updatedAt || 0))) best = sh;
-  }
-  return best;
+function judgeSheetForParticipant(uid, pid) {
+  return (State.sheets.get(uid) || new Map()).get(pid) || null;
+}
+
+function judgeLabel(uid, fallback) {
+  const j = State.juries.get(uid);
+  return (j && j.name) || fallback || "Adjudicator";
 }
 
 function computeResults() {
   const out = new Map();
   for (const p of sortedParts()) {
-    const a = slotSheet("J1", p.id), b = slotSheet("J2", p.id);
+    const c = catOf(p);
+    const panel = panelForCategory(c);
+    const a = judgeSheetForParticipant(panel.j1Uid, p.id);
+    const b = judgeSheetForParticipant(panel.j2Uid, p.id);
     const ta = total(a), tb = total(b);
     const avg = (ta != null && tb != null) ? (ta + tb) / 2 : null;
-    const c = catOf(p);
     if (!out.has(c)) out.set(c, []);
-    out.get(c).push({ p, a, b, ta, tb, avg });
+    out.get(c).push({ p, panel, a, b, ta, tb, avg });
   }
   for (const rows of out.values()) {
     const done = rows.filter(r => r.avg != null).sort((x, y) => y.avg - x.avg);
@@ -863,16 +1068,6 @@ function computeResults() {
     rows.length = 0; rows.push(...done, ...rest);
   }
   return out;
-}
-
-function slotWarnings() {
-  const w = [];
-  for (const s of ["J1", "J2"]) {
-    const n = [...State.juries.values()].filter(j => j.slot === s).length;
-    if (n === 0) w.push(`<span class="chip warn">${SLOTS[s]} missing active adjudicator</span>`);
-    if (n > 1) w.push(`<span class="chip bad">Multiple users assigned to ${SLOTS[s]}</span>`);
-  }
-  return w.join(" ");
 }
 
 function renderResults() {
@@ -895,7 +1090,6 @@ function renderResults() {
         <button class="btn" id="copyRes">Copy TSV</button>
         <button class="btn primary" id="dlCsv">Download CSV / Excel</button>
       </div>
-      ${slotWarnings() ? `<div class="row">${slotWarnings()}</div>` : ""}
   `;
 
   if (!totalN) html += `<div class="card empty">No participants recorded. Switch to the Participants tab to add competitors.</div>`;
@@ -903,12 +1097,16 @@ function renderResults() {
   for (const c of shown) {
     const rows = res.get(c) || [];
     const sess = SESSION_META[c];
+    const panel = panelForCategory(c);
+    const j1Name = judgeLabel(panel.j1Uid);
+    const j2Name = judgeLabel(panel.j2Uid);
+
     html += `
       <section>
         <div class="cat-h">
           <h3>${esc(c)}</h3>
           ${sess ? `<span class="chip gold">${esc(sess)}</span>` : ""}
-          <span class="muted small">${rows.filter(r => r.avg != null).length}/${rows.length} complete · Average of J1 & J2</span>
+          <span class="muted small">${rows.filter(r => r.avg != null).length}/${rows.length} complete · ${esc(j1Name)} & ${esc(j2Name)}</span>
         </div>
         <div class="tbl-wrap">
           <table>
@@ -918,8 +1116,8 @@ function renderResults() {
                 <th>No.</th>
                 <th>Participant</th>
                 <th>Repertoire Piece</th>
-                <th class="r">Jury 1</th>
-                <th class="r">Jury 2</th>
+                <th class="r">${esc(j1Name)}</th>
+                <th class="r">${esc(j2Name)}</th>
                 <th class="r">Average Score</th>
                 <th>Award Grade</th>
                 <th>Score Link</th>
@@ -950,9 +1148,9 @@ function renderResults() {
           <tr class="det">
             <td colspan="9">
               <div class="det-grid">
-                ${detCard("Jury 1", r.a, r.ta)}
-                ${detCard("Jury 2", r.b, r.tb)}
-                ${avgDetCard(r)}
+                ${detCard(j1Name, r.a, r.ta)}
+                ${detCard(j2Name, r.b, r.tb)}
+                ${avgDetCard(r, j1Name, j2Name)}
               </div>
             </td>
           </tr>`;
@@ -963,7 +1161,7 @@ function renderResults() {
 
   html += `
     <datalist id="awardList">${AWARDS.map(a => `<option value="${a}">`).join("")}</datalist>
-    <p class="muted small">Rankings are automatically tabulated from the mean average of Jury 1 and Jury 2 totals. Click any row to view per-criterion averages and comments.</p>
+    <p class="muted small">Rankings are automatically tabulated from the mean average of each session's two adjudicators. Click any row to view per-criterion averages and comments.</p>
   </div>`;
 
   $("#main").innerHTML = html;
@@ -985,13 +1183,16 @@ function renderResults() {
 
 function downloadCSV(res, shown) {
   const escCsv = s => '"' + String(s ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ") + '"';
-  const lines = [["Session", "Category", "Rank", "No.", "Participant", "Piece", "Syllabus", "Jury 1", "Jury 2", "Average", "Award", "Jury 1 Comments", "Jury 2 Comments"].map(escCsv).join(",")];
+  const lines = [["Session", "Category", "Rank", "No.", "Participant", "Piece", "Syllabus", "Judge A", "Judge A Score", "Judge B", "Judge B Score", "Average", "Award", "Judge A Comments", "Judge B Comments"].map(escCsv).join(",")];
   for (const c of shown) {
     const sess = SESSION_META[c] || "";
+    const panel = panelForCategory(c);
+    const j1Name = judgeLabel(panel.j1Uid);
+    const j2Name = judgeLabel(panel.j2Uid);
     for (const r of res.get(c) || []) {
       lines.push([
         sess, c, r.rank || "pending", r.p.order ?? "", r.p.name, r.p.piece, r.p.syllabus || "",
-        fmt(r.ta), fmt(r.tb), fmt(r.avg), r.p.award || "",
+        j1Name, fmt(r.ta), j2Name, fmt(r.tb), fmt(r.avg), r.p.award || "",
         r.a ? r.a.comments : "", r.b ? r.b.comments : ""
       ].map(escCsv).join(","));
     }
@@ -1008,10 +1209,10 @@ function downloadCSV(res, shown) {
 }
 
 function detCard(title, sh, t) {
-  if (!sh) return `<div class="det-card"><h4>${title}</h4><span class="muted small">No evaluation submitted yet.</span></div>`;
+  if (!sh) return `<div class="det-card"><h4>${esc(title)}</h4><span class="muted small">No evaluation submitted yet.</span></div>`;
   return `
     <div class="det-card">
-      <h4>${title}</h4>
+      <h4>${esc(title)}</h4>
       <div class="mini num">
         ${CRITERIA.map(([k, l]) => `<span>${l}</span><span>${fmt(scoreVal(sh, k))}/20</span>`).join("")}
         <strong>Total</strong><strong>${fmt(t)}/100</strong>
@@ -1020,9 +1221,9 @@ function detCard(title, sh, t) {
     </div>`;
 }
 
-function avgDetCard(r) {
+function avgDetCard(r, j1Name, j2Name) {
   if (r.avg == null) {
-    return `<div class="det-card summary"><h4>Combined Jury Average</h4><span class="muted small">Waiting for both Jury 1 and Jury 2 to complete all 5 criteria to tabulate average.</span></div>`;
+    return `<div class="det-card summary"><h4>Combined Jury Average</h4><span class="muted small">Waiting for both ${esc(j1Name)} and ${esc(j2Name)} to complete all 5 criteria to tabulate average.</span></div>`;
   }
   return `
     <div class="det-card summary">
@@ -1035,17 +1236,20 @@ function avgDetCard(r) {
         }).join("")}
         <strong>Final Average</strong><strong>${fmt(r.avg)}/100</strong>
       </div>
-      <div class="small muted">Tabulated as (Jury 1: ${fmt(r.ta)} + Jury 2: ${fmt(r.tb)}) ÷ 2</div>
+      <div class="small muted">Tabulated as (${esc(j1Name)}: ${fmt(r.ta)} + ${esc(j2Name)}: ${fmt(r.tb)}) ÷ 2</div>
     </div>`;
 }
 
 function resultsTSV(res, shown) {
   const clean = s => String(s ?? "").replace(/[\t\r\n]+/g, " ");
-  const lines = [["Session", "Category", "Rank", "No.", "Participant", "Piece", "Jury 1", "Jury 2", "Average", "Award", "J1 Comments", "J2 Comments"].join("\t")];
+  const lines = [["Session", "Category", "Rank", "No.", "Participant", "Piece", "Judge A", "Judge A Score", "Judge B", "Judge B Score", "Average", "Award", "Judge A Comments", "Judge B Comments"].join("\t")];
   for (const c of shown) {
     const sess = SESSION_META[c] || "";
+    const panel = panelForCategory(c);
+    const j1Name = judgeLabel(panel.j1Uid);
+    const j2Name = judgeLabel(panel.j2Uid);
     for (const r of res.get(c) || []) {
-      lines.push([sess, c, r.rank || "pending", r.p.order ?? "", r.p.name, r.p.piece, fmt(r.ta), fmt(r.tb), fmt(r.avg), r.p.award || "", r.a ? r.a.comments : "", r.b ? r.b.comments : ""].map(clean).join("\t"));
+      lines.push([sess, c, r.rank || "pending", r.p.order ?? "", r.p.name, r.p.piece, j1Name, fmt(r.ta), j2Name, fmt(r.tb), fmt(r.avg), r.p.award || "", r.a ? r.a.comments : "", r.b ? r.b.comments : ""].map(clean).join("\t"));
     }
   }
   return lines.join("\n");
@@ -1109,13 +1313,14 @@ function renderParticipants() {
       if (cat !== null) html += `</tbody></table></div></section>`;
       cat = catOf(p);
       const sess = SESSION_META[cat];
+      const panel = panelForCategory(cat);
       const n = list.filter(x => catOf(x) === cat).length;
       html += `
         <section>
           <div class="cat-h">
             <h3>${esc(cat)}</h3>
             ${sess ? `<span class="chip gold">${esc(sess)}</span>` : ""}
-            <span class="muted small">${n} entries</span>
+            <span class="muted small">${n} entries · ${esc(panel.label)}</span>
           </div>
           <div class="tbl-wrap">
             <table class="pt">
@@ -1133,7 +1338,11 @@ function renderParticipants() {
               </thead>
               <tbody>`;
     }
-    const a = total(slotSheet("J1", p.id)) != null, b = total(slotSheet("J2", p.id)) != null;
+    const panel = panelForCategory(cat);
+    const a = total(judgeSheetForParticipant(panel.j1Uid, p.id)) != null;
+    const b = total(judgeSheetForParticipant(panel.j2Uid, p.id)) != null;
+    const j1Short = judgeLabel(panel.j1Uid).split(" ").pop();
+    const j2Short = judgeLabel(panel.j2Uid).split(" ").pop();
     html += `
       <tr>
         <td><input class="tin no num" data-id="${esc(p.id)}" data-f="order" value="${esc(p.order ?? "")}" inputmode="numeric"></td>
@@ -1147,7 +1356,7 @@ function renderParticipants() {
             ${safeUrl(p.scoreLink) ? `<a class="btn small" href="${esc(safeUrl(p.scoreLink))}" target="_blank" rel="noopener" style="white-space:nowrap;padding:6px 10px">Open ↗</a>` : ""}
           </div>
         </td>
-        <td><span class="chip ${a ? "good" : ""}">J1 ${a ? "✓" : "–"}</span> <span class="chip ${b ? "good" : ""}">J2 ${b ? "✓" : "–"}</span></td>
+        <td><span class="chip ${a ? "good" : ""}">${esc(j1Short)} ${a ? "✓" : "–"}</span> <span class="chip ${b ? "good" : ""}">${esc(j2Short)} ${b ? "✓" : "–"}</span></td>
         <td><button class="btn danger" data-del="${esc(p.id)}">Delete</button></td>
       </tr>`;
   }
@@ -1220,8 +1429,8 @@ function renderParticipants() {
 /** ---------- JURIES & SETUP VIEW ---------- */
 function renderJuries() {
   const e = State.event;
-  const list = sortedParts();
-  const rows = [...State.juries.entries()].sort((a, b) => ncmp(a[1].slot || "Z", b[1].slot || "Z"));
+  const allParts = [...State.participants.entries()].map(([id, d]) => ({ ...d, id }));
+  const rows = [...State.juries.entries()];
 
   let html = `
     <div class="stack">
@@ -1237,46 +1446,47 @@ function renderJuries() {
       </div>
 
       <div class="card stack">
-        <h3>Adjudicator Seats Management</h3>
-        <p class="muted small" style="margin:0">Manage adjudicator seats. In live deployments, each jury logs in independently to access their assigned seat.</p>
-        ${slotWarnings() ? `<div class="row">${slotWarnings()}</div>` : ""}
-        ${rows.length ? `
-          <div class="tbl-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Adjudicator Name</th>
-                  <th>Assigned Seat</th>
-                  <th class="r">Completed Evaluations</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows.map(([uid, j]) => {
-                  const sh = State.sheets.get(uid) || new Map();
-                  const done = list.filter(p => total(sh.get(p.id)) != null).length;
-                  return `
-                    <tr>
-                      <td><strong>${esc(j.name || "Adjudicator")}</strong> ${uid === State.uid ? '<span class="chip">Active Session</span>' : ""}</td>
-                      <td>
-                        <select class="tin" data-seat="${esc(uid)}" style="width:auto">
-                          ${["J1", "J2", "TEST"].map(k => `<option value="${k}" ${j.slot === k ? "selected" : ""}>${SLOTS[k]}</option>`).join("")}
-                        </select>
-                      </td>
-                      <td class="r num">${done} / ${list.length}</td>
-                      <td><button class="btn" data-view="${esc(uid)}">${State.viewJury === uid ? "Hide Sheet" : "Inspect Sheet"}</button></td>
-                    </tr>`;
-                }).join("")}
-              </tbody>
-            </table>
-          </div>` : `<div class="empty">No adjudicators registered.</div>`}
+        <h3>Session Panel & Direct Links</h3>
+        <p class="muted small" style="margin:0">Session 1 uses Valentino Loh & U-Jin Lim; Sessions 2 & 3 use Dr. Jason Tye & Valentino Loh. Share each judge's link directly.</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Adjudicator</th>
+                <th>Assigned Sessions</th>
+                <th class="r">Completed Evaluations</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(([uid, j]) => {
+                const sh = State.sheets.get(uid) || new Map();
+                const sessions = Array.isArray(j.sessions) ? j.sessions : [1, 2, 3];
+                const eligible = allParts.filter(p => sessions.includes(sessionNumOfCategory(catOf(p))));
+                const done = eligible.filter(p => total(sh.get(p.id)) != null).length;
+                return `
+                  <tr>
+                    <td><strong>${esc(j.name || "Adjudicator")}</strong></td>
+                    <td><span class="chip gold">Session${sessions.length > 1 ? "s" : ""} ${sessions.join(" & ")}</span></td>
+                    <td class="r num">${done} / ${eligible.length}</td>
+                    <td><button class="btn" data-view="${esc(uid)}">${State.viewJury === uid ? "Hide Sheet" : "Inspect Sheet"}</button></td>
+                  </tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
       </div>`;
 
   if (State.viewJury && State.juries.has(State.viewJury)) {
     const j = State.juries.get(State.viewJury), sh = State.sheets.get(State.viewJury) || new Map();
+    const sessions = Array.isArray(j.sessions) ? j.sessions : [1, 2, 3];
+    const inspList = allParts
+      .filter(p => sessions.includes(sessionNumOfCategory(catOf(p))))
+      .sort((a, b) => compareCategories(catOf(a), catOf(b)) || ((Number(a.order) || 9999) - (Number(b.order) || 9999)));
+
     html += `
       <div class="card stack">
-        <h3>Submissions Inspection: ${esc(j.name || "Jury")} (${esc(SLOTS[j.slot])})</h3>
+        <h3>Submissions Inspection: ${esc(j.name || "Jury")}</h3>
         <div class="tbl-wrap">
           <table>
             <thead>
@@ -1290,7 +1500,7 @@ function renderJuries() {
               </tr>
             </thead>
             <tbody>
-              ${list.map(p => {
+              ${inspList.map(p => {
                 const s = sh.get(p.id);
                 return `
                   <tr>
@@ -1318,15 +1528,6 @@ function renderJuries() {
     banner("Event configuration updated successfully.", "info");
     setTimeout(() => banner(""), 2500);
   };
-
-  document.querySelectorAll("[data-seat]").forEach(s => {
-    s.onchange = () => {
-      const uid = s.dataset.seat;
-      const j = State.juries.get(uid);
-      if (j) { j.slot = s.value; persistState(); }
-      render();
-    };
-  });
 
   document.querySelectorAll("[data-view]").forEach(b => {
     b.onclick = () => {

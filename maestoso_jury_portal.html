@@ -514,6 +514,44 @@ function loadPersistedState() {
   }
 }
 
+function sanitizeForFirestore(val) {
+  if (val == null || typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+    return val;
+  }
+  if (val instanceof Map) {
+    const obj = {};
+    for (const [k, v] of val.entries()) {
+      obj[String(k)] = sanitizeForFirestore(v);
+    }
+    return obj;
+  }
+  if (Array.isArray(val)) {
+    const hasNestedArray = val.some((item) => Array.isArray(item));
+    if (hasNestedArray) {
+      const obj = {};
+      val.forEach((item, idx) => {
+        if (Array.isArray(item) && item.length === 2) {
+          obj[String(item[0])] = sanitizeForFirestore(item[1]);
+        } else {
+          obj[String(idx)] = sanitizeForFirestore(item);
+        }
+      });
+      return obj;
+    }
+    return val.map((item) => sanitizeForFirestore(item));
+  }
+  if (typeof val === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(val)) {
+      if (typeof v !== "function" && v !== undefined) {
+        out[k] = sanitizeForFirestore(v);
+      }
+    }
+    return out;
+  }
+  return String(val);
+}
+
 function defaultJuriesMap() {
   return new Map(Object.entries(INITIAL_JURIES).map(([k, v]) => [k, { ...v, sessions: [...v.sessions] }]));
 }
@@ -574,16 +612,16 @@ function persistState(skipCloud) {
   } catch {}
 
   if (!skipCloud && docRef && !suppressCloudEcho) {
-    setDoc(docRef, serializeState(), { merge: true })
-      .then(() => {
-        State.syncStatus = "live";
-        paintSyncBadge();
-      })
-      .catch(() => {
-        State.syncStatus = "local";
-        paintSyncBadge();
-      });
-  }
+  const cleanPayload = sanitizeForFirestore(serializeState());
+  setDoc(docRef, cleanPayload, { merge: true })
+    .then(() => {
+      State.syncStatus = "live";
+      paintSyncBadge();
+    })
+    .catch(() => {
+      State.syncStatus = "local";
+      paintSyncBadge();
+    });
 }
 
 const savedData = loadPersistedState();

@@ -335,6 +335,7 @@ function syncResultsToGoogleSheet() {
     body: JSON.stringify({ rows })
   }).catch(() => {});
 }
+window.syncResultsToGoogleSheet = syncResultsToGoogleSheet;
 
 const firebaseConfig = {
   apiKey: "AIzaSyCWx990Zd2_xgoFGbR2wZFmA8HFpMsCc0E",

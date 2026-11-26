@@ -299,6 +299,43 @@ function catRank(c) {
 const STORAGE_KEY = "maestoso_jury_portal_v4_2026";
 const FIRESTORE_DOC_PATH = ["competitions", "maestoso_2026_finals"];
 
+const GOOGLE_SHEET_WEBHOOK = "https://script.google.com/macros/s/AKfycbxvgpGZ9IAcsrzrfexUJpu7n08ARFUOtwWQNtlX86Nxwp3jUZXPlC_szKifMYdL7gDx/exec";
+
+function syncResultsToGoogleSheet() {
+  if (!GOOGLE_SHEET_WEBHOOK || GOOGLE_SHEET_WEBHOOK.includes("PASTE_YOUR")) return;
+  const res = computeResults();
+  const rows = [];
+  for (const [cat, list] of res.entries()) {
+    const panel = panelForCategory(cat);
+    const j1Name = judgeLabel(panel.j1Uid);
+    const j2Name = judgeLabel(panel.j2Uid);
+    for (const r of list) {
+      rows.push({
+        session: SESSION_META[cat] || "",
+        category: cat,
+        rank: r.rank || "pending",
+        order: r.p.order ?? "",
+        name: r.p.name || "",
+        piece: r.p.piece || "",
+        j1Name,
+        j1Score: r.ta,
+        j2Name,
+        j2Score: r.tb,
+        avg: r.avg,
+        award: r.p.award || "",
+        j1Comments: r.a ? r.a.comments : "",
+        j2Comments: r.b ? r.b.comments : ""
+      });
+    }
+  }
+  fetch(GOOGLE_SHEET_WEBHOOK, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ rows })
+  }).catch(() => {});
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyCWx990Zd2_xgoFGbR2wZFmA8HFpMsCc0E",
   authDomain: "maestoso2026.firebaseapp.com",
@@ -639,6 +676,7 @@ function persistState(skipCloud) {
       .then(() => {
         State.syncStatus = "live";
         paintSyncBadge();
+        syncResultsToGoogleSheet();
       })
       .catch(() => {
         State.syncStatus = "local";
@@ -646,7 +684,6 @@ function persistState(skipCloud) {
       });
   }
 }
-
 const savedData = loadPersistedState();
 
 const State = {

@@ -673,11 +673,11 @@ function persistState(skipCloud) {
 
   if (!skipCloud && docRef && !suppressCloudEcho) {
     const cleanPayload = sanitizeForFirestore(serializeState());
+    syncResultsToGoogleSheet();
     setDoc(docRef, cleanPayload, { merge: true })
       .then(() => {
         State.syncStatus = "live";
         paintSyncBadge();
-        syncResultsToGoogleSheet();
       })
       .catch(() => {
         State.syncStatus = "local";

@@ -754,31 +754,38 @@ function initFirebase() {
     docRef = doc(db, FIRESTORE_DOC_PATH[0], FIRESTORE_DOC_PATH[1]);
 
     onSnapshot(docRef, (snap) => {
-      if (snap.exists()) {
-        const cloudData = snap.data();
-        suppressCloudEcho = true;
-        hydrateFromObject(cloudData, State.uid);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
-        } catch {}
-        suppressCloudEcho = false;
-        State.sheetKey = null;
-        paintMast();
-        render(true);
-      } else if (!cloudReady) {
-        setDoc(docRef, sanitizeForFirestore(serializeState()), { merge: true }).catch(() => {});
-      }
-      cloudReady = true;
-      State.syncStatus = "live";
-      paintSyncBadge();
-    }, () => {
-      State.syncStatus = "local";
-      paintSyncBadge();
-    });
-  } catch {
-    State.syncStatus = "local";
-    paintSyncBadge();
+  if (snap.exists()) {
+    const cloudData = snap.data();
+    suppressCloudEcho = true;
+    hydrateFromObject(cloudData, State.uid);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
+    } catch {}
+    suppressCloudEcho = false;
+
+    const activeEl = document.activeElement;
+    const isTypingInSheet = activeEl && $("#sheet") && $("#sheet").contains(activeEl) && (activeEl.tagName === "TEXTAREA" || activeEl.tagName === "INPUT");
+    paintMast();
+    if (!isTypingInSheet) {
+      State.sheetKey = null;
+      render(true);
+    } else {
+      paintRail();
+    }
+  } else if (!cloudReady) {
+    setDoc(docRef, sanitizeForFirestore(serializeState()), { merge: true }).catch(() => {});
   }
+  cloudReady = true;
+  State.syncStatus = "live";
+  paintSyncBadge();
+}, () => {
+  State.syncStatus = "local";
+  paintSyncBadge();
+});
+} catch {
+State.syncStatus = "local";
+paintSyncBadge();
+}
 }
 
 /** ---------- INITIALIZATION ---------- */
@@ -1083,21 +1090,22 @@ function readSheet() {
 function onScoreInput() { validateAll(); onEdit(); }
 function onScoreBlur(e) { const r = parseScore(e.target.value); if (r.ok && r.val != null) e.target.value = r.val; }
 
-let saveTimeout = 0;
+let cloudSaveTimer = 0;
 function onEdit() {
   const data = readSheet();
   const pid = State.sel;
   const mySheets = getMySheets();
   mySheets.set(pid, data);
-  persistState();
+  persistState(true);
 
   $("#tv").textContent = fmt(total(data));
   const st = $("#saveSt"); st.className = "save"; st.textContent = "Saving...";
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(() => {
+    persistState(false);
     st.textContent = "Saved & synced";
     paintRail();
-  }, 300);
+  }, 350);
 }
 
 /** ---------- RESULTS VIEW ---------- */
